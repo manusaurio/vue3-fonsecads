@@ -139,17 +139,19 @@ class Message {
     return new Message(template1, filler1, conjunction, template2, filler2);
   }
 
-  toString() {
-    return templates[Number(this.template1)].replace('***', fillersMap.get(this.filler1))
-      + ((this.conjunction ?? NULL_CONJUNCTION) < NULL_CONJUNCTION
-        ? `, ${conjunctions[Number(this.conjunction)]} templates[Number(this.template2)].replace('***', fillersMap.get(this.filler2))`
-        : '');
+  toString(): string {
+    // i'm tired and feeling lazy so let's write a one liner
+    return (this.template1 !== undefined
+      ? templates[Number(this.template1)].replace('***', fillersMap.get(this.filler1) ?? '***') : '')
+        + (this.conjunction < NULL_CONJUNCTION
+          ? `  ${conjunctions[Number(this.conjunction)]} ` + (this.template2 !== undefined
+            ? templates[Number(this.template2)].replace('***', fillersMap.get(this.filler2) ?? '***') : '') : '');
   }
 
   toBigInt() {
     return (this.template1 ?? 0n)
       + ((this.filler1 ?? 0n) << 8n)
-      + ((this.conjunction ?? NULL_CONJUNCTION) << 20n)
+      + (NULL_CONJUNCTION << 20n)
       + ((this.template2 ?? 0n) << 28n)
       + ((this.filler2 ?? 0n) << 36n);
   }
@@ -157,11 +159,10 @@ class Message {
   isValid() {
     return this.template1 !== undefined && this.template1 >= 0 && this.template1 < templates.length
       && fillersMap.has(this.filler1)
-      && this.conjunction === NULL_CONJUNCTION
-      || this.conjunction !== undefined
-      && this.conjunction >= 0 && this.conjunction < conjunctions.length
-      && this.template2 !== undefined && this.template2 >= 0 && this.template2 < templates.length
-      && fillersMap.has(this.filler2);
+      && (this.conjunction === NULL_CONJUNCTION
+        || this.conjunction >= 0 && this.conjunction < conjunctions.length
+        && this.template2 !== undefined && this.template2 >= 0 && this.template2 < templates.length
+        && fillersMap.has(this.filler2));
   }
 }
 
