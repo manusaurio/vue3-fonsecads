@@ -18,5 +18,6 @@ module.exports = {
     'no-mixed-operators': 'off',
     'no-bitwise': 'off',
     'no-plusplus': 'off',
+    'prefer-template': 'off',
   },
 };
