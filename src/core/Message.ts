@@ -107,7 +107,7 @@ class Message {
 
   filler1?: bigint;
 
-  conjunction?: bigint;
+  conjunction: bigint;
 
   template2?: bigint;
 
@@ -116,7 +116,8 @@ class Message {
   constructor(
     template1?: bigint,
     filler1?: bigint,
-    conjunction?: bigint,
+    // eslint-disable-next-line
+    conjunction: bigint = NULL_CONJUNCTION,
     template2?: bigint,
     filler2?: bigint,
   ) {
