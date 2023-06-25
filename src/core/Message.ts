@@ -98,7 +98,7 @@ for (let i = 0; i < fillers.length; i++) {
     fillersMap.set(range + (n++), choice);
   }
 
-  categoryRanges.set(range, category.category);
+  categoryRanges.set(category.category, [range, range + n - 1n]);
   range += 64n;
 }
 
