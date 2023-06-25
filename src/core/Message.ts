@@ -23,7 +23,7 @@ const fillers: Filler[] = [
   {
     category: 'acciones',
     choices: [
-      'poner las cosas en su lugar',
+      'ordenar',
       'desordenar todo',
       'saltarse las clases',
       'asistir a clase',
