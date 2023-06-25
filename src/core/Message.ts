@@ -144,7 +144,7 @@ class Message {
     return (this.template1 !== undefined
       ? templates[Number(this.template1)].replace('***', fillersMap.get(this.filler1) ?? '***') : '')
         + (this.conjunction < NULL_CONJUNCTION
-          ? `  ${conjunctions[Number(this.conjunction)]} ` + (this.template2 !== undefined
+          ? `, ${conjunctions[Number(this.conjunction)]} ` + (this.template2 !== undefined
             ? templates[Number(this.template2)].replace('***', fillersMap.get(this.filler2) ?? '***') : '') : '');
   }
 
