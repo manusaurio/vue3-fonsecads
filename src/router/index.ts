@@ -6,6 +6,11 @@ const routes: Array<RouteRecordRaw> = [
     name: 'map',
     component: () => import(/* webpackChunkName: "map" */ '../views/MapView.vue'),
   },
+  {
+    path: '/compose',
+    name: 'compose',
+    component: () => import('../views/ComposeView.vue'),
+  },
 ];
 
 const router = createRouter({
