@@ -1,5 +1,5 @@
 <template>
-  <ol-map
+ <ol-map
     id="map-viewport"
     :loadTilesWhileAnimating="true"
     :loadTilesWhileInteracting="true"
@@ -8,40 +8,83 @@
       ref="view"
       :center="center"
       :rotation="rotation"
+      constrainOnlyCenter="true"
       :zoom="zoom"
       :projection="projection"
+
+      :zoomFactor="zoomFactor"
+      :maxZoom="maxZoom"
+      :minZoom="minZoom"
+
+      :extent="extent"
     />
     <ol-zoom-control />
 
-    <ol-image-layer id="xkcd">
+    <ol-image-layer>
       <ol-source-image-static
         :url="imgUrl"
-        :imageSize="size"
         :projection="projection"
-        :imageExtent="extent"
-        ></ol-source-image-static>
+        :imageExtent="extent">
+    </ol-source-image-static>
     </ol-image-layer>
 
+    <ol-overlay v-for="(item, index) in messages" :key="index" :position="item.position">
+      <template #default>
+        <!-- this is p awful ngl :D -->
+        <MessagePopover style="user-select: none; pointer-events: none">
+          <template #content>
+            <p>
+            {{ item.content }}
+            </p>
+          </template>
+        </MessagePopover>
+      </template>
+    </ol-overlay>
   </ol-map>
+
+ <div style="z-index: 10000; position: absolute; bottom: 10px; right: 10px">
+   <q-btn fab icon="add" color="primary" />
+  </div>
 </template>
 
 <script lang="ts">
-import { ref, reactive } from 'vue';
+import MessagePopover from '@/components/MessagePopover.vue';
 
-export default {
+import {
+  ref, reactive, defineComponent, PropType,
+} from 'vue';
+
+interface Message {
+  content: string,
+  position: Array<number>;
+}
+
+export default defineComponent({
+  props: {
+    messages: {
+      type: Array as PropType<Message[]>,
+      default: () => [
+        { content: 'sé cauteloso con el arte multimedia, por sobre todo deja que haya música de cuerdas', position: [0, 0] },
+        { content: 'lol yea', position: [612, 484] },
+        { content: 'visiones de basurero... por lo tanto, poner las cosas en su lugar es requerido adelante', position: [512, 484] },
+      ],
+    },
+  },
+  components: {
+    MessagePopover,
+  },
   setup() {
-    const center = ref([512, 484]);
+    const center = ref([0, 0]);
     const zoom = ref(1);
     const rotation = ref(0);
 
-    const imgUrl = ref('https://imgs.xkcd.com/comics/online_communities.png');
+    // eslint-disable-next-line
+    const imgUrl = ref(require('../assets/fonseca.jpg'));
 
-    const size = ref([1024, 968]);
-
-    const extent = ref([0, 0, 1024, 968]);
+    const extent = ref([-589, -596, 589, 596]);
     const projection = reactive({
-      code: 'xkcd-image',
-      units: 'pixels',
+      code: 'fonseca',
+      units: 'm',
       extent,
     });
 
@@ -50,12 +93,11 @@ export default {
       zoom,
       rotation,
       imgUrl,
-      size,
       extent,
       projection,
     };
   },
-};
+});
 </script>
 
 <style>
