@@ -7,6 +7,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import(/* webpackChunkName: "map" */ '../views/MapView.vue'),
   },
   {
+    path: '/view',
+    name: 'message-list',
+    component: () => import('../views/MessageList.vue'),
+  },
+  {
     path: '/compose/locate',
     name: 'locate',
     component: () => import('../views/PlacementView.vue'),
