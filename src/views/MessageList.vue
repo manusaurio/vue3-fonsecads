@@ -1,26 +1,23 @@
 <template>
-  <q-toolbar class="text-primary shadow-1">
-    <q-btn flat round dense icon="arrow_back" />
-    <q-toolbar-title>
-      Mensajes
-    </q-toolbar-title>
-  </q-toolbar>
-
-  <div class="q-gutter-y-sm">
-    <div v-for="(msg, i) in messages" :key="i" class="fds-view-entry q-px-lg q-py-md">
-      <span class="text-caption">{{ msg }}</span>
+  <NavBar title="Mensajes" />
+  <div>
+    <div v-for="post in loaded" :key="post.id" class="fds-view-entry q-px-lg q-py-md">
+      <span class="text-caption">{{ post.content }}</span>
       <div class="row justify-end gap">
         <div>
           <q-btn flat round color="primary"
-                 :icon="Math.random() > .5 ? 'o_thumb_up' : 'thumb_up'" />
+                 @click="() => post.rate(Rating.LIKE)"
+                 :icon="post.rated === Rating.LIKE ? 'thumb_up' : 'o_thumb_up'" />
           <span>
-            {{ Math.round(Math.random() * 5) }}
+            {{ post.likes }}
           </span>
         </div>
         <div>
-          <q-btn flat round color="primary" icon="o_thumb_down" />
+          <q-btn flat round color="primary"
+                 @click="() => post.rate(Rating.DISLIKE)"
+                 :icon="post.rated === Rating.DISLIKE ? 'thumb_down' : 'o_thumb_down'" />
           <span>
-            {{ Math.round(Math.random() * 5) }}
+            {{ post.dislikes }}
           </span>
         </div>
       </div>
@@ -28,9 +25,8 @@
   </div>
 </template>
 
-<style>
+<style scoped>
 .fds-view-entry {
-  width: 100%;
   border-bottom: solid 1px #9f9f9f;
 }
 
@@ -40,13 +36,89 @@
 </style>
 
 <script setup lang="ts">
-import { Message } from '@/core/Message';
+import { ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
-const params = [
+import { ReadablePost, Rating, Location } from '@/core/API';
+import { Message } from '@/core/Message';
+import NavBar from '@/components/NavBar.vue';
+
+class RateablePost implements ReadablePost {
+  id: number;
+  content: Message;
+  likes: number;
+  dislikes: number;
+  rated: Rating;
+  location: Location;
+
+  constructor(
+    id: number,
+    content: Message,
+    likes: number,
+    dislikes: number,
+    rated: Rating,
+    location: Location,
+  ) {
+    this.id = id;
+    this.content = content;
+    this.likes = likes;
+    this.dislikes = dislikes;
+    this.rated = rated;
+    this.location = { ...location }; // hmm is this frown upon? idk;
+  }
+
+  rate(newRating: Rating.LIKE | Rating.DISLIKE): void {
+    if (this.rated === newRating) {
+      this.rated = Rating.UNSET;
+      if (newRating === Rating.LIKE) this.likes--; else this.dislikes--;
+
+      return;
+    }
+
+    if (newRating === Rating.LIKE) {
+      this.likes += 1;
+      if (this.rated === Rating.DISLIKE) this.dislikes -= 1;
+    } else {
+      this.dislikes += 1;
+      if (this.rated === Rating.LIKE) this.likes -= 1;
+    }
+
+    this.rated = newRating;
+  }
+}
+
+const database: RateablePost[] = [
   [3n, 2n, 1n, 1n, 65n],
   [0n, 0n],
   [1n, 130n],
-];
+  [2n, 130n, 3n, 2n, 67n],
+].map((arr, i) => new RateablePost(
+  i,
+  new Message(...arr),
+  Math.floor(Math.random() * 5),
+  Math.floor(Math.random() * 5),
+  Math.floor(Math.random() * 3 - 1),
+  { lat: 33.0, long: -50.0, floor: 0 },
+));
 
-const messages = params.map((arr) => new Message(...arr));
+const loaded = ref<RateablePost[]>([]);
+// const loaded = Ref<RateablePost>(
+
+onMounted(() => {
+  const idsParam = useRoute().query.ids;
+  const ids = typeof idsParam === 'string'
+     && idsParam?.split('.')
+       .filter((s) => s !== '')
+       .map(Number)
+    || undefined;
+
+  if (ids === undefined) {
+    useRouter().back();
+  } else {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const id of ids) {
+      if (id < database.length) loaded.value.push(database[id]);
+    }
+  }
+});
 </script>
