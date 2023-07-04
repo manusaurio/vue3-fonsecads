@@ -7,17 +7,19 @@ export enum Rating {
   UNSET = 0,
 }
 
+export interface SpatialPoint {
+  lat: number,
+  long: number,
+  floor: number,
+}
+
 export interface Post<T> {
   id: number,
   content: T,
   likes: number,
   dislikes: number,
   rated: Rating,
-  location: {
-    lat: number,
-    long: number,
-    floor: number,
-  }
+  location: SpatialPoint,
 }
 
 export interface PostResponse extends Post<number> {
