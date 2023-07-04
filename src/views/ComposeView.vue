@@ -1,12 +1,6 @@
 <template>
-  <q-toolbar class="text-primary">
-    <q-btn flat round dense icon="arrow_back" />
-    <q-toolbar-title>
-      Componer
-    </q-toolbar-title>
-  </q-toolbar>
-
-  <div class="q-px-md q-gutter-y-sm">
+<NavBar title="Componer" />
+  <div class="q-pa-md">
     <div class="fds-composer">
       <span class="text-subtitle1 text-weight-medium">Vista previa</span>
       <div class="text-weight-thin text-negative"
@@ -27,6 +21,7 @@
                 @update:model-value="filler1Change"
                 v-model="category1" :options="categories" label="Categoría de relleno"
                 />
+
       <q-select outlined dense
                 class="ellipsis"
                 :disable="disabledFiller1"
@@ -66,8 +61,6 @@
 .fds-composer {
   display: grid;
   grid-template-columns: 1fr 2fr;
-  width: 600px;
-  max-width: 100%;
   gap: 6px;
 }
 
@@ -87,6 +80,8 @@ import {
   ref, watchEffect,
   computed, Ref,
 } from 'vue';
+
+import NavBar from '@/components/NavBar.vue';
 
 import {
   Message, templates as temps,
@@ -121,8 +116,6 @@ const category2 = ref<MenuOption<[bigint, bigint]>>();
 const filler2 = ref<MenuOption<bigint>>();
 
 const computeFillersByCategory = (cat: { label: string, value: [bigint, bigint] } | undefined) => {
-  console.log('lemme see');
-  console.log(cat);
   const acc: MenuOption<bigint>[] = [];
 
   if (cat !== undefined) {
