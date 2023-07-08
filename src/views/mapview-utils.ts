@@ -7,9 +7,9 @@ import { SpatialPoint } from '@/core/API';
 import { Projection } from 'ol/proj';
 
 interface FloorMeta {
-  image: string;
-  name: string;
-  level: number;
+  readonly image: string;
+  readonly name: string;
+  readonly level: number;
 }
 
 // see 68715924 on SO about private fields combined with `reactive`
@@ -71,6 +71,10 @@ class MapMeta {
 
   getFloor(n: number): FloorMeta {
     return this._floors[n];
+  }
+
+  getFloors(): FloorMeta[] {
+    return [...this._floors];
   }
 
   degreesToPixels(lat: number, long: number): [number, number] {
