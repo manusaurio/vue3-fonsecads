@@ -8,6 +8,7 @@ import { Projection } from 'ol/proj';
 
 interface FloorMeta {
   image: string;
+  name: string;
   level: number;
 }
 
@@ -34,6 +35,7 @@ class MapMeta {
       this._floors.push(
         {
           image: floor.image,
+          name: floor.name,
           level: floor.level,
         },
       );
@@ -62,7 +64,7 @@ class MapMeta {
     return this._point;
   }
 
-  public setLastPoint(value: SpatialPoint) {
+  public setLastPoint(value?: SpatialPoint) {
     this._unixMillis = Date.now();
     this._point = value;
   }

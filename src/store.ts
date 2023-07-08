@@ -67,8 +67,14 @@ const store = reactive({
         // TODO: find a more performant solution
         // TODO: remove from the store
         /* eslint-disable global-require */
-        image: require('@/assets/fonseca2.jpg'),
+        image: require('@/assets/gl.png'),
+        name: 'planta baja',
         level: 0,
+      },
+      {
+        image: require('@/assets/1f.png'),
+        name: 'primer piso',
+        level: 1,
         /* eslint-enable global-require */
       },
     ],
