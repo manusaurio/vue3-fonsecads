@@ -128,7 +128,7 @@ const computeFillersByCategory = (cat: { label: string, value: [bigint, bigint] 
   if (cat !== undefined) {
     const [start, end] = cat.value;
 
-    for (let i = start; i < end; i++) {
+    for (let i = start; i <= end; i++) {
       acc.push({ label: fillersMap.get(i), value: i });
     }
   }
