@@ -84,10 +84,10 @@ class MapMeta {
     ];
   }
 
-  pixelsToDegrees(pixY: number, pixX: number): [number, number] {
+  pixelsToDegrees(pixX: number, pixY: number): [number, number] {
     return [
-      MapMeta.map(pixX, this._bounds[0], this._bounds[2], this.longStart, this.longEnd),
       MapMeta.map(pixY, this._bounds[1], this._bounds[3], this.latStart, this.latEnd),
+      MapMeta.map(pixX, this._bounds[0], this._bounds[2], this.longStart, this.longEnd),
     ];
   }
 }
