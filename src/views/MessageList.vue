@@ -39,86 +39,41 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { ReadablePost, Rating, Location } from '@/core/API';
-import { Message } from '@/core/Message';
+import store from '@/store';
+import {
+  ReadablePost, RateablePost,
+  Rating,
+} from '@/core/API';
+
 import NavBar from '@/components/NavBar.vue';
 
-class RateablePost implements ReadablePost {
-  id: number;
-  content: Message;
-  likes: number;
-  dislikes: number;
-  rated: Rating;
-  location: Location;
-
-  constructor(
-    id: number,
-    content: Message,
-    likes: number,
-    dislikes: number,
-    rated: Rating,
-    location: Location,
-  ) {
-    this.id = id;
-    this.content = content;
-    this.likes = likes;
-    this.dislikes = dislikes;
-    this.rated = rated;
-    this.location = { ...location }; // hmm is this frown upon? idk;
-  }
-
-  rate(newRating: Rating.LIKE | Rating.DISLIKE): void {
-    if (this.rated === newRating) {
-      this.rated = Rating.UNSET;
-      if (newRating === Rating.LIKE) this.likes--; else this.dislikes--;
-
-      return;
-    }
-
-    if (newRating === Rating.LIKE) {
-      this.likes += 1;
-      if (this.rated === Rating.DISLIKE) this.dislikes -= 1;
-    } else {
-      this.dislikes += 1;
-      if (this.rated === Rating.LIKE) this.likes -= 1;
-    }
-
-    this.rated = newRating;
-  }
-}
-
-const database: RateablePost[] = [
-  [3n, 2n, 1n, 1n, 65n],
-  [0n, 0n],
-  [1n, 130n],
-  [2n, 130n, 3n, 2n, 67n],
-].map((arr, i) => new RateablePost(
-  i,
-  new Message(...arr),
-  Math.floor(Math.random() * 5),
-  Math.floor(Math.random() * 5),
-  Math.floor(Math.random() * 3 - 1),
-  { lat: 33.0, long: -50.0, floor: 0 },
-));
+const database: ReadablePost[] = store.messages;
 
 const loaded = ref<RateablePost[]>([]);
-// const loaded = Ref<RateablePost>(
 
 onMounted(() => {
   const idsParam = useRoute().query.ids;
-  const ids = typeof idsParam === 'string'
-     && idsParam?.split('.')
-       .filter((s) => s !== '')
-       .map(Number)
+  const ids: Array<number> | undefined = typeof idsParam === 'string'
+    && idsParam?.split('.')
+      .filter((s) => s !== '')
+      .map(Number)
     || undefined;
 
-  if (ids === undefined) {
+  if (!ids) {
     useRouter().back();
   } else {
-    // eslint-disable-next-line no-restricted-syntax
-    for (const id of ids) {
-      if (id < database.length) loaded.value.push(database[id]);
-    }
+    ids.map((id) => database.at(id))
+      .filter((msg) => msg !== undefined)
+      .forEach((msg: ReadablePost) => loaded.value.push(
+        new RateablePost(
+          msg.id,
+          msg.content,
+          msg.likes,
+          msg.dislikes,
+          msg.rated,
+          msg.location,
+        ),
+      ));
   }
 });
 </script>
