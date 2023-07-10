@@ -1,8 +1,10 @@
 const templates: string[] = [
-  'sé cauteloso con ***',
+  'ten cautela con ***',
   'que viva ***',
   'hay visiones de ***',
-  '*** es necesidad adelante',
+  '*** es requisito acá',
+  'abunda ***',
+  '*** escasea',
 ];
 
 interface Filler {
@@ -40,8 +42,8 @@ const fillers: Filler[] = [
     choices: [
       'las sillas',
       'los bancos',
-      'les estudiantes',
-      'las autoridades',
+      'el alumnado',
+      'la autoridad',
       'la comida',
       'los útiles',
     ],
@@ -69,6 +71,7 @@ const fillers: Filler[] = [
       'la felicidad',
       'la tristeza',
       'las votaciones',
+      'el día de entrega',
     ],
   },
 ];
