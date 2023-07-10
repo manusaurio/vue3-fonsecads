@@ -21,5 +21,6 @@ module.exports = {
     'prefer-template': 'off',
     'lines-between-class-members': 'off',
     'no-restricted-syntax': 'off',
+    'no-confusing-arrow': 'off',
   },
 };
