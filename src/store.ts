@@ -18,8 +18,8 @@ const messages: ReadablePost[] = [
   {
     id: 0,
     content: new Message(0n, 0n),
-    likes: 0,
-    dislikes: 0,
+    likes: 5,
+    dislikes: 2,
     rated: Rating.UNSET,
     location: {
       lat: -34.921882713652614,
@@ -30,8 +30,8 @@ const messages: ReadablePost[] = [
   {
     id: 1,
     content: new Message(2n, 2n, 0n, 0n, 64n),
-    likes: 0,
-    dislikes: 0,
+    likes: 2,
+    dislikes: 1,
     rated: Rating.UNSET,
     location: {
       lat: -34.92218704029536,
@@ -49,6 +49,54 @@ const messages: ReadablePost[] = [
       lat: -34.92235552277306,
       long: -57.94153703932603,
       floor: 0,
+    },
+  },
+  {
+    id: 3,
+    content: new Message(0n, 128n, 1n, 0n, 256n),
+    likes: 0,
+    dislikes: 1,
+    rated: Rating.UNSET,
+    location: {
+      lat: -34.92235552277306,
+      long: -57.94163703932603,
+      floor: 0,
+    },
+  },
+  {
+    id: 4,
+    content: Message.fromString('0x83040010802'),
+    likes: 30,
+    dislikes: 0,
+    rated: Rating.LIKE,
+    location: {
+      lat: -34.92235552277306,
+      long: -57.9416581675538,
+      floor: 1,
+    },
+  },
+  {
+    id: 5,
+    content: Message.fromString('0x108020500004'),
+    likes: 0,
+    dislikes: 1,
+    rated: Rating.UNSET,
+    location: {
+      lat: -34.92234096050089,
+      long: -57.94163851587325,
+      floor: 1,
+    },
+  },
+  {
+    id: 6,
+    content: Message.fromString('0xc1030508400'),
+    likes: 2,
+    dislikes: 1,
+    rated: Rating.LIKE,
+    location: {
+      lat: -34.922430365074554,
+      long: -57.94161375924353,
+      floor: 1,
     },
   },
 ];
