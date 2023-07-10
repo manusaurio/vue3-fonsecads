@@ -52,7 +52,10 @@
                 v-model="filler2" :options="fillers2" label="Opción"
                 />
 
-      <q-btn color="primary" :disabled="!message.isValid" label="Listo" @click="algo" />
+      <q-btn color="primary"
+             :disabled="!message.isValid()"
+             @click="submit"
+             label="Listo"/>
     </div>
   </div>
 </template>
@@ -81,6 +84,8 @@ import {
   computed, Ref,
 } from 'vue';
 
+import { useRouter } from 'vue-router';
+
 import NavBar from '@/components/NavBar.vue';
 
 import {
@@ -105,15 +110,17 @@ const conjunctions: MenuOption<bigint>[] = [nullConjunctionOption].concat(
   conjs.map((e, i) => ({ label: e, value: BigInt(i) })),
 );
 
-const conjunction = ref<MenuOption<bigint>>(nullConjunctionOption);
-
-const template1 = ref<MenuOption<bigint>>();
-const category1 = ref<MenuOption<[bigint, bigint]>>();
-const filler1 = ref<MenuOption<bigint>>();
-
-const template2 = ref<MenuOption<bigint>>();
-const category2 = ref<MenuOption<[bigint, bigint]>>();
-const filler2 = ref<MenuOption<bigint>>();
+const [
+  template1, template2,
+  category1, category2,
+  filler1, filler2,
+  conjunction,
+] = [
+  ref<MenuOption<bigint>>(), ref<MenuOption<bigint>>(),
+  ref<MenuOption<[bigint, bigint]>>(), ref<MenuOption<[bigint, bigint]>>(),
+  ref<MenuOption<bigint>>(), ref<MenuOption<bigint>>(),
+  ref<MenuOption<bigint>>(nullConjunctionOption),
+];
 
 const computeFillersByCategory = (cat: { label: string, value: [bigint, bigint] } | undefined) => {
   const acc: MenuOption<bigint>[] = [];
@@ -165,6 +172,15 @@ const categoryChange = (filler: Ref<MenuOption<bigint> | undefined>) => (
 
 const filler1Change = categoryChange(filler1);
 const filler2Change = categoryChange(filler2);
+
+const router = useRouter();
+
+const submit = function () {
+  router.push({
+    name: 'locate',
+    query: { msg: message.value.toBigInt().toString(16) },
+  });
+};
 
 watchEffect(() => {
   message.value = new Message(
