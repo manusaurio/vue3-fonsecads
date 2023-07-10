@@ -151,7 +151,7 @@ class Message {
   toBigInt() {
     return (this.template1 ?? 0n)
       + ((this.filler1 ?? 0n) << 8n)
-      + (NULL_CONJUNCTION << 20n)
+      + ((this.conjunction ?? NULL_CONJUNCTION) << 20n)
       + ((this.template2 ?? 0n) << 28n)
       + ((this.filler2 ?? 0n) << 36n);
   }
