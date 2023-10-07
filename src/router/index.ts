@@ -1,5 +1,12 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import {
+  createRouter,
+  createWebHistory,
+  RouteRecordRaw,
+  RouteLocationNormalized,
+  NavigationGuardNext,
+} from 'vue-router';
 import store from '@/store';
+import eventBus from '@/event-bus';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -33,7 +40,10 @@ const routes: Array<RouteRecordRaw> = [
     path: '/compose',
     name: 'compose',
     component: () => import('../views/ComposeView.vue'),
-    beforeEnter: () => !(store.mapMeta.getLastPoint() === undefined) || { name: 'map' },
+    beforeEnter: () => {
+      eventBus.emit('loading', false);
+      return (store.mapMeta.getLastPoint() !== undefined) || { name: 'map' };
+    },
   },
 ];
 
@@ -42,4 +52,28 @@ const router = createRouter({
   routes,
 });
 
+router.beforeEach(
+  (
+    to: RouteLocationNormalized,
+    from: RouteLocationNormalized,
+    next: NavigationGuardNext,
+  ) => {
+    if (from.name !== to.name) eventBus.emit('loading', true);
+    next();
+  },
+);
+
+router.beforeResolve(
+  (
+    to: RouteLocationNormalized,
+    from: RouteLocationNormalized,
+    next: NavigationGuardNext,
+  ) => {
+    if (from.name !== to.name) eventBus.emit('loading', false);
+    next();
+  },
+);
+
 export default router;
+
+//

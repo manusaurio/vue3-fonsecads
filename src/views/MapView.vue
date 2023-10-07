@@ -106,6 +106,7 @@
 <script lang="ts">
 import store from '@/store';
 import { ReadablePost, SpatialPoint } from '@/core/API';
+import LoadingFeedback from '@/components/LoadingFeedback.vue';
 
 import { useRoute, useRouter } from 'vue-router';
 import type { View } from 'ol';
@@ -119,7 +120,7 @@ import { SelectEvent } from 'ol/interaction/Select';
 /* eslint-enable import/no-extraneous-dependencies */
 
 import {
-  ref, computed,
+  ref, computed, inject,
   defineComponent, onBeforeMount,
   onMounted, onBeforeUnmount,
 } from 'vue';
@@ -167,6 +168,9 @@ const getPosition = (message: ReadablePost): [number, number] => {
 
 export default defineComponent({
   setup() {
+    // TODO: type safe injection
+    const feedback = inject('feedback') as InstanceType<typeof LoadingFeedback>;
+
     const router = useRouter();
     // TODO: move map-related objects into a single one
     const center = ref([0, 0]);
@@ -196,7 +200,15 @@ export default defineComponent({
     })();
 
     const switchLayer = () => {
+      feedback.value.show();
       const nextLayer = (currentLayer.value.level + 1) % layers.length;
+      const nextLayerImage = new Image();
+      nextLayerImage.onload = () => {
+        feedback.value.hide();
+      };
+
+      nextLayerImage.src = layers[nextLayer].image;
+
       currentLayer.value = layers[nextLayer];
       tooltip.value.show();
 
