@@ -40,7 +40,10 @@ const routes: Array<RouteRecordRaw> = [
     path: '/compose',
     name: 'compose',
     component: () => import('../views/ComposeView.vue'),
-    beforeEnter: () => !(store.mapMeta.getLastPoint() === undefined) || { name: 'map' },
+    beforeEnter: () => {
+      eventBus.emit('loading', false);
+      return (store.mapMeta.getLastPoint() !== undefined) || { name: 'map' };
+    },
   },
 ];
 
