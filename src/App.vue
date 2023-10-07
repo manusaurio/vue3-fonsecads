@@ -21,10 +21,5 @@ eventBus.on('loading', (v: boolean) => {
   else loadingFeedback.value.hide();
 });
 
-const cambio = (o: string | undefined) => {
-  if (o === undefined) loadingFeedback.value.hide();
-  else loadingFeedback.value.show();
-};
-
 provide('feedback', loadingFeedback);
 </script>
