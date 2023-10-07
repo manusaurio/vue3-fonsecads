@@ -115,22 +115,25 @@
 </style>
 
 <script setup lang="ts">
-import { ref, onBeforeMount } from 'vue';
+import {
+  ref, onBeforeMount,
+  inject,
+} from 'vue';
+
 import { useRoute, useRouter } from 'vue-router';
 import { Message } from '@/core/Message';
 import store from '@/store';
 
 import { Rating, ReadablePost } from '@/core/API';
+import LoadingFeedback from '@/components/LoadingFeedback.vue';
 
 import point from '../assets/point.svg';
 import hereIcon from '../assets/location.svg';
 
 const router = useRouter();
 
-const imgUrl = store.mapMeta.getFloor(0).image;
-
-// eslint-disable-next-line
-// const hereIcon = ref(require('../assets/location.svg'));
+// TODO: Type safe injection
+const feedback = inject('feedback') as InstanceType<typeof LoadingFeedback>;
 
 const lastPoint = store.mapMeta.getLastPoint();
 
@@ -170,7 +173,15 @@ const currentLayer = lastPoint ? ref(layers[lastPoint.floor]) : ref(layers[0]);
 let lastTooltipTimer: ReturnType<typeof setTimeout> | undefined;
 const tooltip = ref();
 const switchLayer = () => {
+  feedback.value.show();
   const nextLayer = (currentLayer.value.level + 1) % layers.length;
+  const nextLayerImage = new Image();
+  nextLayerImage.onload = () => {
+    feedback.value.hide();
+  };
+
+  nextLayerImage.src = layers[nextLayer].image;
+
   currentLayer.value = layers[nextLayer];
   tooltip.value.show();
 
