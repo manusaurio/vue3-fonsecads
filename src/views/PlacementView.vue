@@ -1,13 +1,4 @@
 <template>
-  <div>
-    <q-tooltip ref="tooltip"
-      class="text-body2 bg-primary"
-      anchor="bottom middle"
-      :offset="[0, 10]"
-      self="top middle">
-      {{ currentLayer.name }}
-    </q-tooltip>
-  </div>
   <ol-map
     id="map-viewport"
     :loadTilesWhileAnimating="true"
@@ -120,6 +111,8 @@ import {
   inject,
 } from 'vue';
 
+import { Notify } from 'quasar';
+
 import { useRoute, useRouter } from 'vue-router';
 import { Message } from '@/core/Message';
 import store from '@/store';
@@ -170,20 +163,18 @@ const allowedOrigin = (() => {
 const layers = store.mapMeta.getFloors();
 const currentLayer = lastPoint ? ref(layers[lastPoint.floor]) : ref(layers[0]);
 
-let lastTooltipTimer: ReturnType<typeof setTimeout> | undefined;
-const tooltip = ref();
 const switchLayer = () => {
   feedback.value.show();
   const nextLayer = (currentLayer.value.level + 1) % layers.length;
   const nextLayerImage = new Image();
   nextLayerImage.onload = () => {
     feedback.value.hide();
+    Notify.create({ message: currentLayer.value.name });
   };
 
   nextLayerImage.src = layers[nextLayer].image;
 
   currentLayer.value = layers[nextLayer];
-  tooltip.value.show();
 
   // TODO: this is too coupled with recording of the user's position
   //  yet they need to be updated manually from different parts of the
@@ -196,10 +187,6 @@ const switchLayer = () => {
       floor: currentLayer.value.level,
     });
   }
-
-  // TODO: remove tooltip + timeout. Replace with Quasar notifications plugin
-  clearTimeout(lastTooltipTimer);
-  lastTooltipTimer = setTimeout(tooltip.value.hide, 2000);
 };
 
 const allowedRadius = ref(200);
