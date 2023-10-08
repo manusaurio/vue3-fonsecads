@@ -10,7 +10,7 @@ import {
 // To be used on app.use(Quasar, { ... })
 export default {
   config: {
-    loading: { spinnerColor: 'red' },
+    loadingBar: { size: '7px' },
     notify: {
       position: 'top',
       color: 'primary',

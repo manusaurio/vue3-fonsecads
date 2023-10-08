@@ -97,7 +97,6 @@
 <script lang="ts">
 import store from '@/store';
 import { ReadablePost, SpatialPoint } from '@/core/API';
-import LoadingFeedback from '@/components/LoadingFeedback.vue';
 
 import { useRoute, useRouter } from 'vue-router';
 import type { View } from 'ol';
@@ -111,12 +110,12 @@ import { SelectEvent } from 'ol/interaction/Select';
 /* eslint-enable import/no-extraneous-dependencies */
 
 import {
-  ref, computed, inject,
+  ref, computed,
   defineComponent, onBeforeMount,
   onMounted, onBeforeUnmount,
 } from 'vue';
 
-import { Notify } from 'quasar';
+import { Notify, LoadingBar } from 'quasar';
 
 // eslint-disable-next-line
 const hereIcon = ref(require('../assets/location.svg'));
@@ -161,9 +160,6 @@ const getPosition = (message: ReadablePost): [number, number] => {
 
 export default defineComponent({
   setup() {
-    // TODO: type safe injection
-    const feedback = inject('feedback') as InstanceType<typeof LoadingFeedback>;
-
     const router = useRouter();
     // TODO: move map-related objects into a single one
     const center = ref([0, 0]);
@@ -192,11 +188,11 @@ export default defineComponent({
     })();
 
     const switchLayer = () => {
-      feedback.value.show();
+      LoadingBar.start();
       const nextLayer = (currentLayer.value.level + 1) % layers.length;
       const nextLayerImage = new Image();
       nextLayerImage.onload = () => {
-        feedback.value.hide();
+        LoadingBar.stop();
         Notify.create({ message: currentLayer.value.name });
       };
 
