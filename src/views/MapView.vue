@@ -1,13 +1,4 @@
 <template>
-  <div>
-    <q-tooltip ref="tooltip"
-      class="text-body2 bg-primary"
-      anchor="bottom middle"
-      :offset="[0, 10]"
-      self="top middle">
-      {{ currentLayer.name }}
-   </q-tooltip>
- </div>
  <ol-map
     id="map-viewport"
     :loadTilesWhileAnimating="true"
@@ -125,6 +116,8 @@ import {
   onMounted, onBeforeUnmount,
 } from 'vue';
 
+import { Notify } from 'quasar';
+
 // eslint-disable-next-line
 const hereIcon = ref(require('../assets/location.svg'));
 
@@ -182,7 +175,6 @@ export default defineComponent({
     const route = useRoute();
     const tooltip = ref();
     const sourceRef = ref();
-    let lastTooltipTimer: ReturnType<typeof setTimeout> | undefined;
     let nextCoordUpdate: ReturnType<typeof setTimeout> | undefined;
 
     const layers = store.mapMeta.getFloors();
@@ -205,12 +197,12 @@ export default defineComponent({
       const nextLayerImage = new Image();
       nextLayerImage.onload = () => {
         feedback.value.hide();
+        Notify.create({ message: currentLayer.value.name });
       };
 
       nextLayerImage.src = layers[nextLayer].image;
 
       currentLayer.value = layers[nextLayer];
-      tooltip.value.show();
 
       // TODO: this is too coupled with recording of the user's position
       //  yet they need to be updated manually from different parts of the
@@ -223,10 +215,6 @@ export default defineComponent({
           floor: currentLayer.value.level,
         });
       }
-
-      // TODO: remove tooltip + timeout. Replace with Quasar notifications plugin
-      clearTimeout(lastTooltipTimer);
-      lastTooltipTimer = setTimeout(tooltip.value.hide, 2000);
     };
 
     const geoLocChange = (pos: [number?, number?]) => {
