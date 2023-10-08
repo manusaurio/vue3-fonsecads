@@ -6,7 +6,7 @@ import {
   NavigationGuardNext,
 } from 'vue-router';
 import store from '@/store';
-import eventBus from '@/event-bus';
+import { LoadingBar } from 'quasar';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -41,7 +41,7 @@ const routes: Array<RouteRecordRaw> = [
     name: 'compose',
     component: () => import('../views/ComposeView.vue'),
     beforeEnter: () => {
-      eventBus.emit('loading', false);
+      LoadingBar.stop();
       return (store.mapMeta.getLastPoint() !== undefined) || { name: 'map' };
     },
   },
@@ -58,7 +58,7 @@ router.beforeEach(
     from: RouteLocationNormalized,
     next: NavigationGuardNext,
   ) => {
-    if (from.name !== to.name) eventBus.emit('loading', true);
+    if (from.name !== to.name) LoadingBar.start();
     next();
   },
 );
@@ -69,7 +69,7 @@ router.beforeResolve(
     from: RouteLocationNormalized,
     next: NavigationGuardNext,
   ) => {
-    if (from.name !== to.name) eventBus.emit('loading', false);
+    if (from.name !== to.name) LoadingBar.stop();
     next();
   },
 );

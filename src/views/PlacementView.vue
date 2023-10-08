@@ -108,25 +108,20 @@
 <script setup lang="ts">
 import {
   ref, onBeforeMount,
-  inject,
 } from 'vue';
 
-import { Notify } from 'quasar';
+import { Notify, LoadingBar } from 'quasar';
 
 import { useRoute, useRouter } from 'vue-router';
 import { Message } from '@/core/Message';
 import store from '@/store';
 
 import { Rating, ReadablePost } from '@/core/API';
-import LoadingFeedback from '@/components/LoadingFeedback.vue';
 
 import point from '../assets/point.svg';
 import hereIcon from '../assets/location.svg';
 
 const router = useRouter();
-
-// TODO: Type safe injection
-const feedback = inject('feedback') as InstanceType<typeof LoadingFeedback>;
 
 const lastPoint = store.mapMeta.getLastPoint();
 
@@ -164,11 +159,11 @@ const layers = store.mapMeta.getFloors();
 const currentLayer = lastPoint ? ref(layers[lastPoint.floor]) : ref(layers[0]);
 
 const switchLayer = () => {
-  feedback.value.show();
+  LoadingBar.start();
   const nextLayer = (currentLayer.value.level + 1) % layers.length;
   const nextLayerImage = new Image();
   nextLayerImage.onload = () => {
-    feedback.value.hide();
+    LoadingBar.stop();
     Notify.create({ message: currentLayer.value.name });
   };
 
