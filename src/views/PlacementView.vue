@@ -116,7 +116,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { Message } from '@/core/Message';
 import store from '@/store';
 
-import { Rating, ReadablePost } from '@/core/API';
+import { Rating } from '@/core/API';
 
 import point from '../assets/point.svg';
 import hereIcon from '../assets/location.svg';
