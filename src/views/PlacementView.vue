@@ -4,6 +4,7 @@
     :loadTilesWhileAnimating="true"
     :loadTilesWhileInteracting="true"
     @singleclick="click"
+    ref="mapRef"
   >
     <ol-view
       ref="view"
@@ -21,7 +22,7 @@
     />
     <ol-zoom-control />
 
-    <ol-image-layer>
+    <ol-image-layer ref="imageLayerRef">
       <ol-source-image-static
         :url="currentLayer.image"
         :projection="projection"
@@ -36,7 +37,7 @@
               <ol-style-fill color="#0000ff11"></ol-style-fill>
               <ol-style-stroke
                 color="#0000ff44"
-                :width="20.0"
+                :width="10.0"
               ></ol-style-stroke>
           </ol-style>
         </ol-feature>
@@ -54,18 +55,6 @@
     <ol-geolocation :projection="projection"
                     :tracking-options="trackingOptions"
                     @positionChanged="geoLocChange">
-      <template>
-        <ol-vector-layer :zIndex="2">
-          <ol-source-vector>
-            <ol-feature>
-              <ol-geom-point :coordinates="allowedOrigin"></ol-geom-point>
-              <ol-style>
-                <ol-style-icon :src="hereIcon" :scale="1.0"></ol-style-icon>
-              </ol-style>
-            </ol-feature>
-          </ol-source-vector>
-        </ol-vector-layer>
-      </template>
     </ol-geolocation>
 
   </ol-map>
@@ -108,9 +97,13 @@
 <script setup lang="ts">
 import {
   ref, onBeforeMount,
+  onMounted,
 } from 'vue';
 
 import { Notify, LoadingBar } from 'quasar';
+
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { getRenderPixel } from 'ol/render';
 
 import { useRoute, useRouter } from 'vue-router';
 import { Message } from '@/core/Message';
@@ -119,7 +112,6 @@ import store from '@/store';
 import { Rating } from '@/core/API';
 
 import point from '../assets/point.svg';
-import hereIcon from '../assets/location.svg';
 
 const router = useRouter();
 
@@ -197,7 +189,36 @@ const msg: Message | undefined = (() => {
   }
 })();
 
+const imageLayerRef = ref();
+const mapRef = ref();
+
 onBeforeMount(() => msg ?? router.push('/'));
+
+const view = ref();
+
+onMounted(() => {
+  imageLayerRef.value.imageLayer.on(
+    'postrender',
+    (event: any) => {
+      if (allowedOrigin.value === undefined) return;
+      const [x, y] = getRenderPixel(
+        event,
+        mapRef.value.map.getPixelFromCoordinate(allowedOrigin.value),
+      );
+
+      const ctx = event.context;
+      const radius = 200;
+      const mappedRadius = radius / view.value.getResolution();
+      ctx.resetTransform();
+      ctx.beginPath();
+
+      ctx.arc(x, y, mappedRadius, 0, 2 * Math.PI, true);
+      ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.fillStyle = 'rgba(20, 20, 20, 0.8)';
+      ctx.fill();
+    },
+  );
+});
 
 const submit = () => {
   if (chosenCoordinates.value === undefined || msg === undefined) return;
@@ -263,7 +284,6 @@ const isWithin = (p1: [number, number]): boolean => {
   return x > minX && x < maxX && y > minY && y < maxY;
 };
 
-const view = ref();
 const click = (e: any) => {
   if (allowedOrigin.value[0] === undefined || allowedOrigin.value[1] === undefined) return;
 
