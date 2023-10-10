@@ -101,13 +101,9 @@ import { ReadablePost, SpatialPoint } from '@/core/API';
 import { useRoute, useRouter } from 'vue-router';
 import type { View } from 'ol';
 
-/* eslint-disable import/no-extraneous-dependencies */
 import { Style } from 'ol/style';
-
 import Feature from 'ol/Feature';
-
 import { SelectEvent } from 'ol/interaction/Select';
-/* eslint-enable import/no-extraneous-dependencies */
 
 import {
   ref, computed,

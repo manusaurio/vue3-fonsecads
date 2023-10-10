@@ -102,7 +102,6 @@ import {
 
 import { Notify, LoadingBar } from 'quasar';
 
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { getRenderPixel } from 'ol/render';
 
 import { useRoute, useRouter } from 'vue-router';
