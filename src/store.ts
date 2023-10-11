@@ -1,5 +1,5 @@
 import { reactive } from 'vue';
-import MapMeta from '@/views/mapview-utils';
+import MapMeta from '@/MapMeta';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Projection } from 'ol/proj';
 import { Message } from './core/Message';

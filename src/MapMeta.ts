@@ -1,4 +1,3 @@
-// TODO: move this to some other directory
 // TODO: add an image parameter, maybe, and autocompute its bounds?
 // TODO: try to get rid of map parameters (projection etc.) from the store
 
