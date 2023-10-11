@@ -55,7 +55,7 @@
           <ol-feature
             v-for="msg in messages.filter(e => e.location.floor === currentLayer.level)"
             :key="msg.id" :properties="{ msg }">
-            <ol-geom-point :coordinates="getPosition(msg)"></ol-geom-point>
+            <ol-geom-point :coordinates="getPixelsPositionFromPost(msg)"></ol-geom-point>
           </ol-feature>
         </ol-source-vector>
       </ol-source-cluster>
@@ -139,20 +139,23 @@ const stringToCoord = (s: string): [number, number, number, number] => {
 // https://stackoverflow.com/a/51506718/11601118 (edited Dec 17, 2020 at 14:11)
 const wrap = (s: string) => s.replace(/(?![^\n]{1,24}$)([^\n]{1,24})\s/g, '$1\n');
 
-const cachedPos: Map<number, [number, number]> = new Map();
-
 const compPixelsSpatial = (sp: SpatialPoint): [number, number] => {
   const { lat, long } = sp;
   const [x, y] = store.mapMeta.degreesToPixels(lat, long);
   return [x, y];
 };
 
-const getPosition = (message: ReadablePost): [number, number] => {
-  const { id } = message;
-  const pPos = cachedPos.get(id) ?? compPixelsSpatial(message.location);
-  cachedPos.set(id, pPos);
-  return pPos;
-};
+const getPixelsPositionFromPost = (() => {
+  const cachedPos: Map<number, [number, number]> = new Map();
+
+  return (message: ReadablePost): [number, number] => {
+    const { id } = message;
+    const pPos = cachedPos.get(id) ?? compPixelsSpatial(message.location);
+    cachedPos.set(id, pPos);
+
+    return pPos;
+  };
+})();
 
 export default defineComponent({
   setup() {
@@ -316,7 +319,7 @@ export default defineComponent({
       trackingOptions,
       canPost,
       cantPost,
-      getPosition,
+      getPixelsPositionFromPost,
       view,
       zoomFactor,
       minZoom,
