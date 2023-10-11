@@ -30,7 +30,7 @@
 
     <ol-geolocation :projection="projection"
                     :tracking-options="trackingOptions"
-                    @positionChanged="geoLocChange">
+                    @change:position="geoLocChange">
       <template>
         <ol-vector-layer :zIndex="2">
           <ol-source-vector>
@@ -60,14 +60,14 @@
         </ol-source-vector>
       </ol-source-cluster>
 
-      <ol-style :overrideStyleFunction="overrideStyle">
-  <ol-style-text :text="wrap('Visiones de la autoridad, por sobre todo desconfía de la autoridad')"
-                       scale="0.8"
-                       font="14px/0.85 roboto">
-          <ol-style-fill color="#000"></ol-style-fill>
-          <ol-style-stroke color="#fff" :width="6"></ol-style-stroke>
-        </ol-style-text>
-      </ol-style>
+    <ol-style :overrideStyleFunction="overrideStyle">
+      <ol-style-text
+        scale="0.8"
+        font="14px/0.85 roboto">
+        <ol-style-fill color="#000"></ol-style-fill>
+        <ol-style-stroke color="#fff" :width="6"></ol-style-stroke>
+      </ol-style-text>
+    </ol-style>
 
     </ol-vector-layer>
   </ol-map>
@@ -94,21 +94,22 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import store from '@/store';
 import { ReadablePost, SpatialPoint } from '@/core/API';
 
 import { useRoute, useRouter } from 'vue-router';
 import type { View } from 'ol';
 
-import { Style } from 'ol/style';
-import Feature from 'ol/Feature';
-import { SelectEvent } from 'ol/interaction/Select';
+import type { Style } from 'ol/style';
+import type Feature from 'ol/Feature';
+import type { SelectEvent } from 'ol/interaction/Select';
+import type { ObjectEvent } from 'ol/Object';
 
 import {
   ref, computed,
-  defineComponent, onBeforeMount,
-  onMounted, onBeforeUnmount,
+  onBeforeMount, onMounted,
+  onBeforeUnmount,
 } from 'vue';
 
 import { Notify, LoadingBar } from 'quasar';
@@ -157,183 +158,155 @@ const getPixelsPositionFromPost = (() => {
   };
 })();
 
-export default defineComponent({
-  setup() {
-    const router = useRouter();
-    // TODO: move map-related objects into a single one
-    const center = ref([0, 0]);
-    const zoomFactor = ref(2.0);
-    const minZoom = ref(1);
-    const maxZoom = ref(5);
+const router = useRouter();
+// TODO: move map-related objects into a single one
+const center = ref([0, 0]);
+const zoomFactor = ref(2.0);
+const minZoom = ref(1);
+const maxZoom = ref(5);
 
-    const view = ref<View>();
-    const route = useRoute();
-    const tooltip = ref();
-    const sourceRef = ref();
-    let nextCoordUpdate: ReturnType<typeof setTimeout> | undefined;
+const view = ref<View>();
+const route = useRoute();
+const sourceRef = ref();
+let nextCoordUpdate: ReturnType<typeof setTimeout> | undefined;
 
-    const layers = store.mapMeta.getFloors();
-    const currentLayer = ref(layers[0]);
+const layers = store.mapMeta.getFloors();
+const currentLayer = ref(layers[0]);
 
-    const viewCoords: [number, number, number, number] | undefined = (() => {
-      const stringCoord = route.params.coord;
-      if (typeof stringCoord !== 'string' || stringCoord.length < 8) return undefined;
+const viewCoords: [number, number, number, number] | undefined = (() => {
+  const stringCoord = route.params.coord;
+  if (typeof stringCoord !== 'string' || stringCoord.length < 8) return undefined;
 
-      const coord = stringToCoord(stringCoord);
-      const pixelsXY = store.mapMeta.degreesToPixels(coord[0], coord[1]);
+  const coord = stringToCoord(stringCoord);
+  const pixelsXY = store.mapMeta.degreesToPixels(coord[0], coord[1]);
 
-      // TODO: wait, why are they inverted? it should be x-y not y-x
-      return [pixelsXY[1], pixelsXY[0], coord[2], coord[3]];
-    })();
+  // TODO: wait, why are they inverted? it should be x-y not y-x
+  return [pixelsXY[1], pixelsXY[0], coord[2], coord[3]];
+})();
 
-    const switchLayer = () => {
-      LoadingBar.start();
-      const nextLayer = (currentLayer.value.level + 1) % layers.length;
-      const nextLayerImage = new Image();
-      nextLayerImage.onload = () => {
-        LoadingBar.stop();
-        Notify.create({ message: currentLayer.value.name });
-      };
+const switchLayer = () => {
+  LoadingBar.start();
+  const nextLayer = (currentLayer.value.level + 1) % layers.length;
+  const nextLayerImage = new Image();
+  nextLayerImage.onload = () => {
+    LoadingBar.stop();
+    Notify.create({ message: currentLayer.value.name });
+  };
 
-      nextLayerImage.src = layers[nextLayer].image;
+  nextLayerImage.src = layers[nextLayer].image;
 
-      currentLayer.value = layers[nextLayer];
+  currentLayer.value = layers[nextLayer];
 
-      // TODO: this is too coupled with recording of the user's position
-      //  yet they need to be updated manually from different parts of the
-      //  code. Refactor it.
-      const lastPoint = store.mapMeta.getLastPoint();
-      if (lastPoint) {
-        store.mapMeta.setLastPoint({
-          long: lastPoint.long,
-          lat: lastPoint.lat,
-          floor: currentLayer.value.level,
-        });
-      }
-    };
-
-    const geoLocChange = (pos: [number?, number?]) => {
-      if (pos[0] === undefined || pos[1] === undefined) {
-        locCoordinates.value[0] = undefined;
-        locCoordinates.value[1] = undefined;
-        store.mapMeta.setLastPoint(undefined);
-        return;
-      }
-
-      const [x, y] = store.mapMeta.degreesToPixels(pos[1], pos[0]);
-
-      locCoordinates.value[0] = x;
-      locCoordinates.value[1] = y;
-
-      if (store.mapMeta.getLastPoint() === undefined) {
-        view.value?.setZoom(3.0);
-        view.value?.setCenter([x, y]);
-      }
-
-      store.mapMeta.setLastPoint({
-        long: pos[0],
-        lat: pos[1],
-        floor: currentLayer.value.level,
-      });
-    };
-
-    const zoom = ref(1);
-
-    // good enough...
-    // TODO: maybe include it as part of the map metadata
-    const rotation = Math.PI * 0.27;
-
-    const trackingOptions = ref({ enableHighAccuracy: true });
-
-    const projection = store.mapMeta.getVueOlProjection();
-
-    const overrideStyle = (feature: Feature, style: Style) => {
-      const clusteredFeatures = feature.get('features');
-      const size = clusteredFeatures.length;
-      const text = wrap(clusteredFeatures[0].get('msg').content.toString());
-
-      style.getText().setText(
-        size === 1
-          ? text
-          : `${text} (${size - 1}+)`,
-      );
-    };
-
-    // poorly named
-    const selectCluster = (cosa: SelectEvent) => {
-      if (cosa.selected.length > 0) {
-        const features = cosa.selected[0].get('features');
-        if (features.length === 1) {
-          const { id } = features[0].get('msg');
-          router.push({ name: 'message-list', query: { ids: id } });
-        } else {
-          const ids = features.map((f: Feature) => f.get('msg').id).join('.');
-          router.push({ name: 'message-list', query: { ids } });
-        }
-      }
-    };
-
-    const updateRouteCoords = () => {
-      setTimeout(updateRouteCoords, 1000);
-
-      const v = view.value;
-      if (v) {
-        const cZoom = v.getZoom();
-        const cCenter = v.getCenter();
-        const cFloor: number = currentLayer.value.level;
-
-        if (cCenter) {
-          const [x, y] = cCenter;
-          const [lat, long] = store.mapMeta.pixelsToDegrees(x, y);
-
-          router.replace({ name: 'map', params: { coord: `${lat},${long},${cZoom},${cFloor}` } });
-        }
-      }
-    };
-
-    onBeforeMount(() => {
-      store.mapMeta.setLastPoint(undefined);
+  // TODO: this is too coupled with recording of the user's position
+  //  yet they need to be updated manually from different parts of the
+  //  code. Refactor it.
+  const lastPoint = store.mapMeta.getLastPoint();
+  if (lastPoint) {
+    store.mapMeta.setLastPoint({
+      long: lastPoint.long,
+      lat: lastPoint.lat,
+      floor: currentLayer.value.level,
     });
+  }
+};
 
-    onMounted(() => {
-      if (viewCoords) {
-        view.value?.setCenter([viewCoords[1], viewCoords[0]]);
-        view.value?.setZoom(viewCoords[2]);
-        currentLayer.value = layers[viewCoords[3]];
-      }
+const geoLocChange = (event: ObjectEvent) => {
+  const pos = event.target.getPosition();
+  if (pos[0] === undefined || pos[1] === undefined) {
+    locCoordinates.value[0] = undefined;
+    locCoordinates.value[1] = undefined;
+    store.mapMeta.setLastPoint(undefined);
+    return;
+  }
 
-      updateRouteCoords();
-    });
+  const [x, y] = store.mapMeta.degreesToPixels(pos[1], pos[0]);
 
-    onBeforeUnmount(() => clearTimeout(nextCoordUpdate));
+  locCoordinates.value[0] = x;
+  locCoordinates.value[1] = y;
 
-    return {
-      messages,
-      center,
-      zoom,
-      rotation,
-      projection,
-      hereIcon,
-      geoLocChange,
-      locCoordinates,
-      trackingOptions,
-      canPost,
-      cantPost,
-      getPixelsPositionFromPost,
-      view,
-      zoomFactor,
-      minZoom,
-      maxZoom,
-      switchLayer,
-      currentLayer,
-      tooltip,
-      overrideStyle,
-      selectCluster,
-      sourceRef,
-      wrap,
-    };
-  },
+  if (store.mapMeta.getLastPoint() === undefined) {
+    view.value?.setZoom(3.0);
+    view.value?.setCenter([x, y]);
+  }
+
+  store.mapMeta.setLastPoint({
+    long: pos[0],
+    lat: pos[1],
+    floor: currentLayer.value.level,
+  });
+};
+
+const zoom = ref(1);
+
+// good enough...
+// TODO: maybe include it as part of the map metadata
+const rotation = Math.PI * 0.27;
+
+const trackingOptions = ref({ enableHighAccuracy: true });
+
+const projection = store.mapMeta.getVueOlProjection();
+
+const overrideStyle = (feature: Feature, style: Style) => {
+  const clusteredFeatures = feature.get('features');
+  const size = clusteredFeatures.length;
+  const text = wrap(clusteredFeatures[0].get('msg').content.toString());
+
+  style.getText().setText(
+    size === 1
+      ? text
+      : `${text} (${size - 1}+)`,
+  );
+};
+
+// poorly named
+const selectCluster = (cosa: SelectEvent) => {
+  if (cosa.selected.length > 0) {
+    const features = cosa.selected[0].get('features');
+    if (features.length === 1) {
+      const { id } = features[0].get('msg');
+      router.push({ name: 'message-list', query: { ids: id } });
+    } else {
+      const ids = features.map((f: Feature) => f.get('msg').id).join('.');
+      router.push({ name: 'message-list', query: { ids } });
+    }
+  }
+};
+
+const updateRouteCoords = () => {
+  setTimeout(updateRouteCoords, 1000);
+
+  console.log('updateando');
+
+  const v = view.value;
+  if (v) {
+    const cZoom = v.getZoom();
+    const cCenter = v.getCenter();
+    const cFloor: number = currentLayer.value.level;
+
+    if (cCenter) {
+      const [x, y] = cCenter;
+      const [lat, long] = store.mapMeta.pixelsToDegrees(x, y);
+
+      router.replace({ name: 'map', params: { coord: `${lat},${long},${cZoom},${cFloor}` } });
+    }
+  }
+};
+
+onBeforeMount(() => {
+  store.mapMeta.setLastPoint(undefined);
 });
+
+onMounted(() => {
+  if (viewCoords) {
+    view.value?.setCenter([viewCoords[1], viewCoords[0]]);
+    view.value?.setZoom(viewCoords[2]);
+    currentLayer.value = layers[viewCoords[3]];
+  }
+
+  updateRouteCoords();
+});
+
+onBeforeUnmount(() => clearTimeout(nextCoordUpdate));
 </script>
 
 <style>
