@@ -5,7 +5,7 @@
     :loadTilesWhileInteracting="true"
   >
     <ol-view
-      ref="view"
+      ref="viewRef"
       :center="center"
       :rotation="rotation"
       constrainOnlyCenter="true"
@@ -165,23 +165,11 @@ const zoomFactor = ref(2.0);
 const minZoom = ref(1);
 const maxZoom = ref(5);
 
-const view = ref<View>();
-const route = useRoute();
+const viewRef = ref<View>();
 const sourceRef = ref();
 
 const layers = store.mapMeta.getFloors();
 const currentLayer = ref(layers[0]);
-
-const viewCoords: [number, number, number, number] | undefined = (() => {
-  const stringCoord = route.params.coord;
-  if (typeof stringCoord !== 'string' || stringCoord.length < 8) return undefined;
-
-  const coord = stringToCoord(stringCoord);
-  const pixelsXY = store.mapMeta.degreesToPixels(coord[0], coord[1]);
-
-  // TODO: wait, why are they inverted? it should be x-y not y-x
-  return [pixelsXY[1], pixelsXY[0], coord[2], coord[3]];
-})();
 
 const switchLayer = () => {
   LoadingBar.start();
@@ -224,8 +212,8 @@ const geoLocChange = (event: ObjectEvent) => {
   locCoordinates.value[1] = y;
 
   if (store.mapMeta.getLastPoint() === undefined) {
-    view.value?.setZoom(3.0);
-    view.value?.setCenter([x, y]);
+    viewRef.value?.setZoom(3.0);
+    viewRef.value?.setCenter([x, y]);
   }
 
   store.mapMeta.setLastPoint({
@@ -272,12 +260,10 @@ const selectCluster = (cosa: SelectEvent) => {
 };
 
 const updateRouteCoords = () => {
-  console.log('updateando');
-
-  const v = view.value;
-  if (v) {
-    const cZoom = v.getZoom();
-    const cCenter = v.getCenter();
+  const view = viewRef.value;
+  if (view) {
+    const cZoom = view.getZoom();
+    const cCenter = view.getCenter();
     const cFloor: number = currentLayer.value.level;
 
     if (cCenter) {
@@ -302,9 +288,20 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
+  const viewCoords: [number, number, number, number] | undefined = (() => {
+    const stringCoord = useRoute().params.coord;
+    if (typeof stringCoord !== 'string' || stringCoord.length < 8) return undefined;
+
+    const coord = stringToCoord(stringCoord);
+    const pixelsXY = store.mapMeta.degreesToPixels(coord[0], coord[1]);
+
+    // TODO: wait, why are they inverted? it should be x-y not y-x
+    return [pixelsXY[1], pixelsXY[0], coord[2], coord[3]];
+  })();
+
   if (viewCoords) {
-    view.value?.setCenter([viewCoords[1], viewCoords[0]]);
-    view.value?.setZoom(viewCoords[2]);
+    viewRef.value?.setCenter([viewCoords[1], viewCoords[0]]);
+    viewRef.value?.setZoom(viewCoords[2]);
     currentLayer.value = layers[viewCoords[3]];
   }
 
