@@ -168,7 +168,6 @@ const maxZoom = ref(5);
 const view = ref<View>();
 const route = useRoute();
 const sourceRef = ref();
-let nextCoordUpdate: ReturnType<typeof setTimeout> | undefined;
 
 const layers = store.mapMeta.getFloors();
 const currentLayer = ref(layers[0]);
@@ -273,8 +272,6 @@ const selectCluster = (cosa: SelectEvent) => {
 };
 
 const updateRouteCoords = () => {
-  setTimeout(updateRouteCoords, 1000);
-
   console.log('updateando');
 
   const v = view.value;
@@ -292,6 +289,14 @@ const updateRouteCoords = () => {
   }
 };
 
+let updateRouteCoordsIntervalNumber: number;
+
+const startUpdateRouteCoords = () => {
+  updateRouteCoordsIntervalNumber = setInterval(updateRouteCoords, 2000);
+};
+
+const stopUpdateRouteCoords = () => clearInterval(updateRouteCoordsIntervalNumber);
+
 onBeforeMount(() => {
   store.mapMeta.setLastPoint(undefined);
 });
@@ -303,10 +308,10 @@ onMounted(() => {
     currentLayer.value = layers[viewCoords[3]];
   }
 
-  updateRouteCoords();
+  startUpdateRouteCoords();
 });
 
-onBeforeUnmount(() => clearTimeout(nextCoordUpdate));
+onBeforeUnmount(stopUpdateRouteCoords);
 </script>
 
 <style>
