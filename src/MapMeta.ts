@@ -2,8 +2,9 @@
 // TODO: try to get rid of map parameters (projection etc.) from the store
 
 import { SpatialPoint } from '@/core/API';
-// eslint-disable-next-line import/no-extraneous-dependencies
+
 import { Projection } from 'ol/proj';
+import { Polygon } from 'ol/geom';
 
 interface FloorMeta {
   readonly image: string;
@@ -26,6 +27,8 @@ class MapMeta {
     readonly latEnd: number,
     readonly longStart: number,
     readonly longEnd: number,
+    readonly userZone: Polygon,
+    readonly center: [number, number],
     floors: FloorMeta[],
   ) {
     this._bounds = Object.freeze(

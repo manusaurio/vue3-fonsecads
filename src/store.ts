@@ -1,11 +1,12 @@
 import { reactive } from 'vue';
 import MapMeta from '@/MapMeta';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { Projection } from 'ol/proj';
+import { Polygon } from 'ol/geom';
+import { Coordinate } from 'ol/coordinate';
+
 import { Message } from './core/Message';
 import { Rating, ReadablePost } from './core/API';
 
-// eslint-disable-next-line import/no-extraneous-dependencies
 const projection: Projection = new Projection({
   code: 'fonseca',
   units: 'pixels',
@@ -101,6 +102,29 @@ const messages: ReadablePost[] = [
   },
 ];
 
+const userZone: Polygon = (() => {
+  type CoordMatrix = Array<Array<Coordinate>>;
+  // I'm laazyy maaaan
+  /* eslint-disable implicit-arrow-linebreak */
+  const mapPoints: (m: CoordMatrix) => CoordMatrix = (coordMatrix: CoordMatrix) =>
+    coordMatrix.map((s: Array<Coordinate>) => s.map((c: Coordinate) => [
+      MapMeta.map(c[0], 0, 1675, -837.5, 837.5),
+      -MapMeta.map(c[1], 0, 1675, -837.5, 837.5),
+    ]));
+  /* eslint-enable implicit-arrow-linebreak */
+
+  const nonNegativePoints = [
+    [[534, 150], [462, 1467], [837, 1772], [958, 1779], [1669, 900], [1172, 502], [1061, 88]],
+  ];
+
+  const mappedPoints = mapPoints(nonNegativePoints);
+
+  return new Polygon(
+    mappedPoints,
+    'XY',
+  );
+})();
+
 // are readonly properties causing trouble for typing?
 const store = reactive({
   messages,
@@ -110,9 +134,10 @@ const store = reactive({
     -34.92160867383513,
     -57.94210610271903,
     -57.94091690332326,
+    userZone,
+    [200, 0],
     [
       {
-        // TODO: find a more performant solution
         // TODO: remove from the store
         /* eslint-disable global-require */
         image: require('@/assets/gl.png'),
