@@ -17,9 +17,6 @@ export default {
       timeout: 700,
       group: false,
     },
-    dialog: {
-      'no-route-dismiss': true,
-    },
   },
   plugins: {
     Loading,
