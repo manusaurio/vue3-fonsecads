@@ -3,6 +3,7 @@
     id="map-viewport"
     :loadTilesWhileAnimating="true"
     :loadTilesWhileInteracting="true"
+    :controls="[]"
   >
     <ol-view
       ref="viewRef"
@@ -30,7 +31,8 @@
 
     <ol-geolocation :projection="projection"
                     :tracking-options="trackingOptions"
-                    @change:position="geoLocChange">
+                    @change:position="geoLocChange"
+                    @error="geoLocError">
       <template>
         <ol-vector-layer :zIndex="2">
           <ol-source-vector>
@@ -38,6 +40,12 @@
               <ol-geom-point :coordinates="locCoordinates"></ol-geom-point>
               <ol-style>
                 <ol-style-icon :src="hereIcon" :scale="1.0"></ol-style-icon>
+              </ol-style>
+            </ol-feature>
+            <ol-feature>
+              <ol-style>
+                <ol-style-stroke color="red" :width="2"></ol-style-stroke>
+                <ol-style-fill color="rgba(255,0,0,0.2)"></ol-style-fill>
               </ol-style>
             </ol-feature>
           </ol-source-vector>
@@ -72,10 +80,37 @@
     </ol-vector-layer>
   </ol-map>
 
+  <q-dialog v-model="showingInfo">
+    <q-card>
+      <q-card-section>
+        <div class="text-h6">FonsecaDS</div>
+      </q-card-section>
+      <q-card-section>
+        Desde esta aplicación podés dejar mensajes anónimos en puntos geoespaciales.
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn flat label="OK" color="primary" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
  <div style="position: absolute; top:20px; right: 20px;"
    class="fds-map-buttons">
    <q-btn round color="grey-1" text-color="grey-9" icon="layers" @click="switchLayer"/>
- </div>
+    <q-btn round
+           size="sm"
+           color="grey-1"
+           text-color="grey-9"
+           icon="question_mark"
+           @click="showingInfo = !showingInfo"/>
+    <Transition name="fds-button-trans">
+      <q-btn v-if="outOfBounds || !isGeolocWorking"
+             round size="sm" color="red-5" text-color="grey-1" icon="warning"
+             @click="showWarning()"
+             />
+    </Transition>
+  </div>
 
  <div style="position: absolute; bottom: 20px; right: 20px;"
    class="fds-map-buttons">
@@ -84,12 +119,6 @@
           color="primary"
           :disabled="cantPost"
           @click="$router.push({ name: 'compose' });">
-     <q-tooltip anchor="center left"
-                :class="{ invisible: canPost }"
-                self="center right"
-                :hide-delay="1500">
-       <strong>Tu ubicacion es necesaria</strong>
-     </q-tooltip>
    </q-btn>
   </div>
 </template>
@@ -105,22 +134,28 @@ import type { Style } from 'ol/style';
 import type Feature from 'ol/Feature';
 import type { SelectEvent } from 'ol/interaction/Select';
 import type { ObjectEvent } from 'ol/Object';
+import type { GeolocationError } from 'ol/Geolocation';
+import { easeOut } from 'ol/easing';
 
 import {
-  ref, computed,
-  onBeforeMount, onMounted,
+  ref,
+  computed,
+  onMounted,
   onBeforeUnmount,
 } from 'vue';
 
-import { Notify, LoadingBar } from 'quasar';
+import { Notify, LoadingBar, Dialog } from 'quasar';
 
 // eslint-disable-next-line
 const hereIcon = ref(require('../assets/location.svg'));
 
 const locCoordinates = ref<[number?, number?]>([undefined, undefined]);
 
-const canPost = computed(() => store.mapMeta.getLastPoint() !== undefined);
-const cantPost = computed(() => store.mapMeta.getLastPoint() === undefined);
+const outOfBounds = ref(false);
+const isGeolocWorking = ref(true);
+
+const canPost = computed(() => store.mapMeta.getLastPoint() !== undefined && !outOfBounds.value);
+const cantPost = computed(() => !canPost.value);
 
 const messages = ref<ReadablePost[]>(store.messages);
 
@@ -197,7 +232,61 @@ const switchLayer = () => {
   }
 };
 
+const warningDialog = ref<{
+  title: string,
+  message: string,
+  html: boolean,
+  'no-route-dismiss': boolean,
+}>();
+
+const showingInfo = ref(false);
+
+const showWarning = () => Dialog.create(warningDialog.value ?? {});
+
+const shownGeoLocErrors = ref<Set<number>>(new Set());
+
+const geoLocError = (error: GeolocationError) => {
+  let title: string;
+  let message: string;
+
+  isGeolocWorking.value = false;
+
+  const errorConsts = window.GeolocationPositionError;
+
+  switch (error.code) {
+    case errorConsts.PERMISSION_DENIED:
+      title = '¡Rechazaste compartir tu ubicación!';
+      message = 'Este sitio requiere que compartas tu ubicación.'
+        + '<br><br>Por favor, volvé a ingresar y aceptá la petición del navegador.';
+      break;
+    case errorConsts.POSITION_UNAVAILABLE:
+      title = 'No se pudo ubicar tu dispositivo';
+      message = 'La ubicación no está disponible.';
+      break;
+    case errorConsts.TIMEOUT:
+      title = 'Error';
+      message = 'Tu dispositivo está tardando demasiado en reportar su ubicación.';
+      break;
+    default:
+      title = 'Error';
+      message = 'Hubo un problema no específico durante la geolocalización.';
+  }
+
+  warningDialog.value = {
+    title,
+    message,
+    html: true,
+    'no-route-dismiss': true,
+  };
+
+  if (shownGeoLocErrors.value.has(error.code)) showWarning();
+
+  shownGeoLocErrors.value.add(error.code);
+};
+
 const geoLocChange = (event: ObjectEvent) => {
+  isGeolocWorking.value = true;
+
   const pos = event.target.getPosition();
   if (pos[0] === undefined || pos[1] === undefined) {
     locCoordinates.value[0] = undefined;
@@ -211,9 +300,33 @@ const geoLocChange = (event: ObjectEvent) => {
   locCoordinates.value[0] = x;
   locCoordinates.value[1] = y;
 
+  outOfBounds.value = !store.mapMeta.userZone.intersectsCoordinate([x, y]);
+
   if (store.mapMeta.getLastPoint() === undefined) {
-    viewRef.value?.setZoom(3.0);
-    viewRef.value?.setCenter([x, y]);
+    const view = viewRef.value;
+
+    if (!outOfBounds.value) {
+      view?.animate({
+        center: [x, y],
+        zoom: 3.0,
+        duration: 700,
+      });
+    } else {
+      view?.animate({
+        zoom: 0,
+        center: [200, 0],
+        rotation: 0,
+        duration: 1000,
+        easing: easeOut,
+      });
+
+      warningDialog.value = {
+        title: 'Fuera de rango',
+        message: 'Tu dispositivo está reportando su ubicación, pero está fuera de los límites del mapa.',
+        html: false,
+        'no-route-dismiss': true,
+      };
+    }
   }
 
   store.mapMeta.setLastPoint({
@@ -283,10 +396,6 @@ const startUpdateRouteCoords = () => {
 
 const stopUpdateRouteCoords = () => clearInterval(updateRouteCoordsIntervalNumber);
 
-onBeforeMount(() => {
-  store.mapMeta.setLastPoint(undefined);
-});
-
 onMounted(() => {
   const viewCoords: [number, number, number, number] | undefined = (() => {
     const stringCoord = useRoute().params.coord;
@@ -323,5 +432,15 @@ onBeforeUnmount(stopUpdateRouteCoords);
   align-content: center;
   align-items: center;
   gap: 10px;
+}
+
+.fds-button-trans-enter-active,
+.fds-button-trans-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fds-button-trans-enter-from,
+.fds-button-trans-leave-to {
+  opacity: 0;
 }
 </style>
