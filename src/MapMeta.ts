@@ -17,7 +17,7 @@ class MapMeta {
   _unixMillis?: number;
   _point?: SpatialPoint;
   _floors: FloorMeta[] = [];
-  _bounds: [number, number, number, number];
+  readonly _bounds: Readonly<[number, number, number, number]>;
   _projection: Projection;
 
   constructor(
@@ -28,7 +28,10 @@ class MapMeta {
     readonly longEnd: number,
     floors: FloorMeta[],
   ) {
-    this._bounds = [...(projection.getExtent() as [number, number, number, number])];
+    this._bounds = Object.freeze(
+      [...(projection.getExtent())],
+    ) as Readonly<[number, number, number, number]>;
+
     this._projection = projection;
     for (const floor of floors) {
       this._floors.push(
@@ -74,6 +77,10 @@ class MapMeta {
 
   getFloors(): FloorMeta[] {
     return [...this._floors];
+  }
+
+  getBounds() {
+    return this._bounds;
   }
 
   degreesToPixels(lat: number, long: number): [number, number] {
