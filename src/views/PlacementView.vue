@@ -1,4 +1,5 @@
 <template>
+<div class="full-height column no-wrap">
   <ol-map
     id="map-viewport"
     :loadTilesWhileAnimating="true"
@@ -64,14 +65,7 @@
    <q-btn round color="grey-1" text-color="grey-9" icon="layers" @click="switchLayer"/>
   </div>
 
-  <div class="shadow-up-3 q-pa-md"
-    style="position: absolute;
-              bottom: 0;
-              right: 0;
-              left: 0;
-
-              background-color: white;
-              ">
+  <div class="shadow-up-6 q-pa-md z-top">
     <h2 class="text-subtitle1 no-margin no-padding text-weight-medium">
       Elige el punto de publicación
     </h2>
@@ -86,6 +80,7 @@
         color="primary" label="Enviar" @click="submit" />
     </div>
   </div>
+</div>
 </template>
 
 <style>
