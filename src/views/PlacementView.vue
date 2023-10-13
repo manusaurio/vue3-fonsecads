@@ -105,6 +105,8 @@ import store from '@/store';
 
 import { Rating } from '@/core/API';
 
+import RenderEvent from 'ol/render/Event';
+
 import point from '../assets/point.svg';
 
 const router = useRouter();
@@ -193,14 +195,17 @@ const view = ref();
 onMounted(() => {
   imageLayerRef.value.imageLayer.on(
     'postrender',
-    (event: any) => {
+    (event: RenderEvent) => {
       if (allowedOrigin.value === undefined) return;
       const [x, y] = getRenderPixel(
         event,
         mapRef.value.map.getPixelFromCoordinate(allowedOrigin.value),
       );
 
-      const ctx = event.context;
+      if (!(event.context instanceof CanvasRenderingContext2D)) return;
+
+      const ctx = event.context as CanvasRenderingContext2D;
+
       const radius = 200;
       const mappedRadius = radius / view.value.getResolution();
       ctx.resetTransform();
