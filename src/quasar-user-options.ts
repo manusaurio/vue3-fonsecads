@@ -4,7 +4,7 @@ import '@quasar/extras/material-icons-outlined/material-icons-outlined.css';
 
 import {
   Loading, LoadingBar,
-  Notify,
+  Notify, Dialog,
 } from 'quasar';
 
 // To be used on app.use(Quasar, { ... })
@@ -17,8 +17,16 @@ export default {
       timeout: 700,
       group: false,
     },
+    dialog: {
+      'no-route-dismiss': true,
+    },
   },
-  plugins: { Loading, LoadingBar, Notify },
+  plugins: {
+    Loading,
+    LoadingBar,
+    Notify,
+    Dialog,
+  },
   extras: [
     'material-icons-outlined',
   ],
