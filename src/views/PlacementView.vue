@@ -106,6 +106,7 @@ import store from '@/store';
 import { Rating } from '@/core/API';
 
 import RenderEvent from 'ol/render/Event';
+import { MapBrowserEvent } from 'ol';
 
 import point from '../assets/point.svg';
 
@@ -283,13 +284,14 @@ const isWithin = (p1: [number, number]): boolean => {
   return x > minX && x < maxX && y > minY && y < maxY;
 };
 
-const click = (e: any) => {
+const click = (e: MapBrowserEvent<UIEvent>) => {
   if (allowedOrigin.value[0] === undefined || allowedOrigin.value[1] === undefined) return;
 
   const origin: [number, number] = [allowedOrigin.value[0], allowedOrigin.value[1]];
+  const coordinate = e.coordinate as [number, number];
 
-  if (dist(origin, e.coordinate) < allowedRadius.value && isWithin(e.coordinate)) {
-    chosenCoordinates.value = e.coordinate;
+  if (dist(origin, coordinate) < allowedRadius.value && isWithin(coordinate)) {
+    chosenCoordinates.value = coordinate;
   }
 };
 </script>
