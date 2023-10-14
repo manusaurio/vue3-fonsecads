@@ -175,7 +175,7 @@ const filler2Change = categoryChange(filler2);
 
 const router = useRouter();
 
-const submit = function () {
+const submit = () => {
   router.push({
     name: 'locate',
     query: { msg: message.value.toBigInt().toString(16) },
