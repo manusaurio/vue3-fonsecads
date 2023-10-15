@@ -349,12 +349,14 @@ const projection = store.mapMeta.getVueOlProjection();
 const overrideStyle = (feature: Feature, style: Style) => {
   const clusteredFeatures = feature.get('features');
   const size = clusteredFeatures.length;
-  const text = wrap(clusteredFeatures[0].get('msg').content.toString());
+  const msg: ReadablePost = clusteredFeatures[0].get('msg');
+
+  const shownText = wrap(msg.content.toString());
 
   style.getText().setText(
     size === 1
-      ? text
-      : `${text} (${size - 1}+)`,
+      ? shownText
+      : `${shownText} (${size - 1}+)`,
   );
 };
 
