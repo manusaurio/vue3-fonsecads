@@ -80,7 +80,7 @@
     </ol-vector-layer>
   </ol-map>
 
-  <q-dialog v-model="showingInfo">
+  <q-dialog v-model="showingInfo" :no-route-dismiss="true">
     <q-card>
       <q-card-section>
         <div class="text-h6">FonsecaDS</div>
