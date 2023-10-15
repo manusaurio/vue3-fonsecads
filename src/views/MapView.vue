@@ -156,8 +156,6 @@ import postRenderCircle from './postRenderCircle';
 
 const postableRadius: number = store.getPostableRadius();
 
-const locCoordinates = ref<[number?, number?]>([undefined, undefined]);
-
 const outOfBounds = ref(false);
 const isGeolocWorking = ref(true);
 
@@ -324,16 +322,11 @@ const geoLocChange = (event: ObjectEvent) => {
 
   const pos = event.target.getPosition();
   if (pos[0] === undefined || pos[1] === undefined) {
-    locCoordinates.value[0] = undefined;
-    locCoordinates.value[1] = undefined;
     store.mapMeta.setLastPoint(undefined);
     return;
   }
 
   const [x, y] = store.mapMeta.degreesToPixels(pos[1], pos[0]);
-
-  locCoordinates.value[0] = x;
-  locCoordinates.value[1] = y;
 
   outOfBounds.value = !store.mapMeta.userZone.intersectsCoordinate([x, y]);
 
