@@ -69,6 +69,12 @@ class MapMeta {
     return this._point;
   }
 
+  getLastPointInPixels(): [number, number] | undefined {
+    if (this._point === undefined) return undefined;
+
+    return this.degreesToPixels(this._point.lat, this._point.long);
+  }
+
   public setLastPoint(value?: SpatialPoint) {
     this._unixMillis = Date.now();
     this._point = value;
