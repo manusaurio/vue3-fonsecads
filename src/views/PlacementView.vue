@@ -105,7 +105,7 @@ import store from '@/store';
 
 import { Rating } from '@/core/API';
 
-import RenderEvent from 'ol/render/Event';
+import type RenderEvent from 'ol/render/Event';
 import { MapBrowserEvent } from 'ol';
 
 import point from '../assets/point.svg';

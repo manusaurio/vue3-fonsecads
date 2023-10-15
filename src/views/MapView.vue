@@ -4,6 +4,7 @@
     :loadTilesWhileAnimating="true"
     :loadTilesWhileInteracting="true"
     :controls="[]"
+    ref="mapRef"
   >
     <ol-view
       ref="viewRef"
@@ -21,63 +22,66 @@
     />
     <ol-zoom-control />
 
-    <ol-image-layer>
+    <ol-image-layer ref="imageLayerRef">
       <ol-source-image-static
         :url="currentLayer.image"
         :projection="projection"
         :imageExtent="projection.extent">
-    </ol-source-image-static>
+      </ol-source-image-static>
     </ol-image-layer>
 
     <ol-geolocation :projection="projection"
                     :tracking-options="trackingOptions"
                     @change:position="geoLocChange"
                     @error="geoLocError">
-      <template>
-        <ol-vector-layer :zIndex="2">
-          <ol-source-vector>
-            <ol-feature>
-              <ol-geom-point :coordinates="locCoordinates"></ol-geom-point>
-              <ol-style>
-                <ol-style-icon :src="hereIcon" :scale="1.0"></ol-style-icon>
-              </ol-style>
-            </ol-feature>
-            <ol-feature>
-              <ol-style>
-                <ol-style-stroke color="red" :width="2"></ol-style-stroke>
-                <ol-style-fill color="rgba(255,0,0,0.2)"></ol-style-fill>
-              </ol-style>
-            </ol-feature>
-          </ol-source-vector>
-        </ol-vector-layer>
-      </template>
     </ol-geolocation>
 
     <ol-interaction-clusterselect
-      @select="selectCluster">
+      @select="selectCluster"
+      :filter="filterCluster"
+      >
     </ol-interaction-clusterselect>
 
     <ol-vector-layer>
-      <ol-source-cluster ref="sourceRef" :distance="50">
+      <ol-source-vector>
+        <ol-feature
+          v-for="msg in farawayMessages.values()"
+          :key="msg.id" :properties="{ msg }">
+          <ol-geom-point :coordinates="getPixelsPositionFromPost(msg)"></ol-geom-point>
+        </ol-feature>
+      </ol-source-vector>
+
+      <ol-style>
+        <ol-style-text
+          text="?"
+          font="2em/0.8 roboto"
+          >
+          <ol-style-stroke color="#ffffffac" :width="6"></ol-style-stroke>
+        </ol-style-text>
+      </ol-style>
+    </ol-vector-layer>
+
+    <ol-vector-layer className="fds-ol-selectable">
+      <ol-source-cluster :distance="50">
         <ol-source-vector>
           <ol-feature
-            v-for="msg in messages.filter(e => e.location.floor === currentLayer.level)"
+            v-for="msg in nearbyMessages.values()"
             :key="msg.id" :properties="{ msg }">
             <ol-geom-point :coordinates="getPixelsPositionFromPost(msg)"></ol-geom-point>
           </ol-feature>
         </ol-source-vector>
       </ol-source-cluster>
 
-    <ol-style :overrideStyleFunction="overrideStyle">
-      <ol-style-text
-        scale="0.8"
-        font="14px/0.85 roboto">
-        <ol-style-fill color="#000"></ol-style-fill>
-        <ol-style-stroke color="#fff" :width="6"></ol-style-stroke>
-      </ol-style-text>
-    </ol-style>
-
+      <ol-style :overrideStyleFunction="overrideStyle">
+        <ol-style-text
+          scale="0.85"
+          font="14px/0.85 roboto"
+          >
+          <ol-style-stroke color="#ffffff" :width="6"></ol-style-stroke>
+        </ol-style-text>
+      </ol-style>
     </ol-vector-layer>
+
   </ol-map>
 
   <q-dialog v-model="showingInfo" :no-route-dismiss="true">
@@ -88,7 +92,6 @@
       <q-card-section>
         Desde esta aplicación podés dejar mensajes anónimos en puntos geoespaciales.
       </q-card-section>
-
       <q-card-actions align="right">
         <q-btn flat label="OK" color="primary" v-close-popup />
       </q-card-actions>
@@ -128,7 +131,8 @@ import store from '@/store';
 import { ReadablePost, SpatialPoint } from '@/core/API';
 
 import { useRoute, useRouter } from 'vue-router';
-import type { View } from 'ol';
+import type { View, Map as OLMap } from 'ol';
+import type { Layer } from 'ol/layer';
 
 import type { Style } from 'ol/style';
 import type Feature from 'ol/Feature';
@@ -146,8 +150,11 @@ import {
 
 import { Notify, LoadingBar, Dialog } from 'quasar';
 
-// eslint-disable-next-line
-const hereIcon = ref(require('../assets/location.svg'));
+import { dist } from '@/math-utils';
+
+import postRenderCircle from './postRenderCircle';
+
+const postableRadius: number = store.getPostableRadius();
 
 const locCoordinates = ref<[number?, number?]>([undefined, undefined]);
 
@@ -158,6 +165,8 @@ const canPost = computed(() => store.mapMeta.getLastPoint() !== undefined && !ou
 const cantPost = computed(() => !canPost.value);
 
 const messages = ref<ReadablePost[]>(store.messages);
+const farawayMessages = ref<Set<ReadablePost>>(new Set());
+const nearbyMessages = ref<Set<ReadablePost>>(new Set());
 
 // TODO: it could go with the utils
 const stringToCoord = (s: string): [number, number, number, number] => {
@@ -201,10 +210,34 @@ const minZoom = ref(1);
 const maxZoom = ref(5);
 
 const viewRef = ref<View>();
-const sourceRef = ref();
+const mapRef = ref<{ map: OLMap }>();
 
 const layers = store.mapMeta.getFloors();
 const currentLayer = ref(layers[0]);
+
+const updateVisibility = () => {
+  const userPos = store.mapMeta.getLastPointInPixels();
+
+  farawayMessages.value.clear();
+  nearbyMessages.value.clear();
+
+  if (!userPos) {
+    for (const message of messages.value) {
+      if (message.location.floor === currentLayer.value.level) {
+        farawayMessages.value.add(message);
+      }
+    }
+  } else {
+    for (const message of messages.value) {
+      if (message.location.floor === currentLayer.value.level) {
+        const msgPos = getPixelsPositionFromPost(message);
+
+        if (dist(msgPos, userPos) < postableRadius) nearbyMessages.value.add(message);
+        else farawayMessages.value.add(message);
+      }
+    }
+  }
+};
 
 const switchLayer = () => {
   LoadingBar.start();
@@ -230,6 +263,8 @@ const switchLayer = () => {
       floor: currentLayer.value.level,
     });
   }
+
+  updateVisibility();
 };
 
 const warningDialog = ref<{
@@ -334,9 +369,13 @@ const geoLocChange = (event: ObjectEvent) => {
     lat: pos[1],
     floor: currentLayer.value.level,
   });
+
+  updateVisibility();
 };
 
 const zoom = ref(1);
+
+const filterCluster = (_: Feature, l: Layer) => l.getClassName() === 'fds-ol-selectable';
 
 // good enough...
 // TODO: maybe include it as part of the map metadata
@@ -398,7 +437,25 @@ const startUpdateRouteCoords = () => {
 
 const stopUpdateRouteCoords = () => clearInterval(updateRouteCoordsIntervalNumber);
 
+const imageLayerRef = ref<{ imageLayer: Layer | undefined }>();
+
 onMounted(() => {
+  const map = mapRef.value?.map;
+  const view = viewRef.value;
+  const imageLayer = imageLayerRef.value?.imageLayer;
+
+  if (map && view && imageLayer) {
+    const renderCircle = postRenderCircle(
+      map,
+      view,
+      postableRadius,
+      'rgba(20, 20, 20, 0.8)',
+      store.mapMeta.getLastPointInPixels.bind(store.mapMeta),
+    );
+
+    imageLayerRef.value?.imageLayer?.on('postrender', renderCircle);
+  }
+
   const viewCoords: [number, number, number, number] | undefined = (() => {
     const stringCoord = useRoute().params.coord;
     if (typeof stringCoord !== 'string' || stringCoord.length < 8) return undefined;
@@ -417,6 +474,7 @@ onMounted(() => {
   }
 
   startUpdateRouteCoords();
+  updateVisibility();
 });
 
 onBeforeUnmount(stopUpdateRouteCoords);

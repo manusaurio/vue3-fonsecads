@@ -127,6 +127,7 @@ const userZone: Polygon = (() => {
 
 // are readonly properties causing trouble for typing?
 const store = reactive({
+  getPostableRadius: () => 200,
   messages,
   mapMeta: new MapMeta(
     projection,
