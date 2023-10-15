@@ -279,7 +279,7 @@ const geoLocError = (error: GeolocationError) => {
     'no-route-dismiss': true,
   };
 
-  if (shownGeoLocErrors.value.has(error.code)) showWarning();
+  if (!shownGeoLocErrors.value.has(error.code)) showWarning();
 
   shownGeoLocErrors.value.add(error.code);
 };
