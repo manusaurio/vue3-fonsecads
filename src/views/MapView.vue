@@ -1,4 +1,5 @@
 <template>
+<div class="full-height column no-wrap">
  <ol-map
     id="map-viewport"
     :loadTilesWhileAnimating="true"
@@ -35,12 +36,6 @@
                     @change:position="geoLocChange"
                     @error="geoLocError">
     </ol-geolocation>
-
-    <ol-interaction-clusterselect
-      @select="selectCluster"
-      :filter="filterCluster"
-      >
-    </ol-interaction-clusterselect>
 
     <ol-vector-layer>
       <ol-source-vector>
@@ -84,6 +79,11 @@
 
   </ol-map>
 
+  <MessageViewer v-if="viewingPosts.length > 0"
+                 :posts="viewingPosts"
+                 :exit-function="() => { viewingPosts = []; }"
+                 />
+
   <q-dialog v-model="showingInfo" :no-route-dismiss="true">
     <q-card>
       <q-card-section>
@@ -124,6 +124,7 @@
           @click="$router.push({ name: 'compose' });">
    </q-btn>
   </div>
+</div>
 </template>
 
 <script setup lang="ts">
@@ -131,15 +132,16 @@ import store from '@/store';
 import { ReadablePost, SpatialPoint } from '@/core/API';
 
 import { useRoute, useRouter } from 'vue-router';
-import type { View, Map as OLMap } from 'ol';
+import type { View, Map as OLMap, MapBrowserEvent } from 'ol';
 import type { Layer } from 'ol/layer';
 
 import type { Style } from 'ol/style';
 import type Feature from 'ol/Feature';
-import type { SelectEvent } from 'ol/interaction/Select';
 import type { ObjectEvent } from 'ol/Object';
 import type { GeolocationError } from 'ol/Geolocation';
 import { easeOut } from 'ol/easing';
+
+import MessageViewer from '@/components/MessageViewer.vue';
 
 import {
   ref,
@@ -152,6 +154,7 @@ import { Notify, LoadingBar, Dialog } from 'quasar';
 
 import { dist } from '@/math-utils';
 
+import { FeatureLike } from 'ol/Feature';
 import postRenderCircle from './postRenderCircle';
 
 const postableRadius: number = store.getPostableRadius();
@@ -199,6 +202,8 @@ const getPixelsPositionFromPost = (() => {
     return pPos;
   };
 })();
+
+const viewingPosts = ref<ReadablePost[]>([]);
 
 const router = useRouter();
 // TODO: move map-related objects into a single one
@@ -368,8 +373,6 @@ const geoLocChange = (event: ObjectEvent) => {
 
 const zoom = ref(1);
 
-const filterCluster = (_: Feature, l: Layer) => l.getClassName() === 'fds-ol-selectable';
-
 // good enough...
 // TODO: maybe include it as part of the map metadata
 const rotation = Math.PI * 0.27;
@@ -390,20 +393,6 @@ const overrideStyle = (feature: Feature, style: Style) => {
       ? shownText
       : `${shownText} (${size - 1}+)`,
   );
-};
-
-// poorly named
-const selectCluster = (cosa: SelectEvent) => {
-  if (cosa.selected.length > 0) {
-    const features = cosa.selected[0].get('features');
-    if (features.length === 1) {
-      const { id } = features[0].get('msg');
-      router.push({ name: 'message-list', query: { ids: id } });
-    } else {
-      const ids = features.map((f: Feature) => f.get('msg').id).join('.');
-      router.push({ name: 'message-list', query: { ids } });
-    }
-  }
 };
 
 const updateRouteCoords = () => {
@@ -446,7 +435,20 @@ onMounted(() => {
       store.mapMeta.getLastPointInPixels.bind(store.mapMeta),
     );
 
-    imageLayerRef.value?.imageLayer?.on('postrender', renderCircle);
+    imageLayer.on('postrender', renderCircle);
+
+    map.on('click', (e: MapBrowserEvent<UIEvent>) => {
+      let topCluster: FeatureLike | undefined;
+      map.forEachFeatureAtPixel(e.pixel, (cluster: FeatureLike, l: Layer) => {
+        if (l.getClassName() === 'fds-ol-selectable') topCluster = cluster;
+      });
+
+      if (!topCluster) viewingPosts.value = [];
+      else {
+        const posts = topCluster.get('features').map((f: Feature) => f.get('msg'));
+        viewingPosts.value = posts;
+      }
+    });
   }
 
   const viewCoords: [number, number, number, number] | undefined = (() => {
