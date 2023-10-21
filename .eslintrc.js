@@ -23,5 +23,6 @@ module.exports = {
     'lines-between-class-members': 'off',
     'no-restricted-syntax': 'off',
     'no-confusing-arrow': 'off',
+    'import/prefer-default-export': 'off',
   },
 };
