@@ -1,6 +1,6 @@
 import {
-  onActivated,
-  onDeactivated,
+  onMounted,
+  onBeforeUnmount,
   unref,
   Ref,
 } from 'vue';
@@ -52,7 +52,7 @@ export function useUpdateRouteWithCoords(
     updateTimerRef = setInterval(updateRoute, 2000);
   };
 
-  onActivated(startUpdateRouteCoords);
+  onMounted(startUpdateRouteCoords);
 
-  onDeactivated(stopUpdateRouteCoords);
+  onBeforeUnmount(stopUpdateRouteCoords);
 }
