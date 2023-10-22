@@ -138,8 +138,6 @@ const clickOnMapEvent = (e: MapBrowserEvent<UIEvent>) => {
   }
 };
 
-const randomNumber = Math.random();
-
 onMounted(() => {
   mapRef?.value?.map.on('click', clickOnMapEvent);
 });
