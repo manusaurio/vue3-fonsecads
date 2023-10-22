@@ -6,7 +6,7 @@
       :loadTilesWhileAnimating="true"
       :loadTilesWhileInteracting="true"
       :controls="[]"
-      class="full-height"
+      class="col"
       ref="mapRef"
       >
       <ol-view
