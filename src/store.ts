@@ -1,4 +1,4 @@
-import { reactive } from 'vue';
+import { reactive, ref, Ref } from 'vue';
 import MapMeta from '@/MapMeta';
 import { Projection } from 'ol/proj';
 import { Polygon } from 'ol/geom';
@@ -15,7 +15,7 @@ const projection: Projection = new Projection({
 
 // -34.921882713652614, -57.94138876779047
 
-const messages: ReadablePost[] = [
+const messages: Ref<ReadablePost[]> = ref([
   {
     id: 0,
     content: new Message(0n, 0n),
@@ -100,7 +100,7 @@ const messages: ReadablePost[] = [
       floor: 1,
     },
   },
-];
+]);
 
 const userZone: Polygon = (() => {
   type CoordMatrix = Array<Array<Coordinate>>;
