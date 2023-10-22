@@ -6,7 +6,7 @@ import { SpatialPoint } from '@/core/API';
 import { Projection } from 'ol/proj';
 import { Polygon } from 'ol/geom';
 
-interface FloorMeta {
+export interface FloorMeta {
   readonly image: string;
   readonly name: string;
   readonly level: number;
