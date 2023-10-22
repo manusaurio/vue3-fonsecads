@@ -8,6 +8,7 @@ export default (
   radius: number,
   fillStyle: string,
   originFunction: () => ([number, number] | undefined),
+  predicate?: () => boolean,
 ) => (
   event: RenderEvent,
 ) => {
@@ -16,7 +17,7 @@ export default (
   const resolution = view.getResolution();
   const origin = originFunction();
 
-  if (!origin || !resolution) return;
+  if (!origin || !resolution || predicate && !predicate()) return;
 
   const [x, y] = getRenderPixel(
     event,
