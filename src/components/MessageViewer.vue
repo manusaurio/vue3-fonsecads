@@ -8,12 +8,11 @@
          color="primary"
          icon="close"
          class="absolute z-top q-mt-sm q-ml-sm"
-         style="left: auto; right: 0"
+         style="left: auto; right: 12px"
          @click="exitFunction"
          />
   <q-carousel
     v-model="slide"
-    v-bind="$attrs"
     transition-prev="scale"
     transition-next="scale"
     swipeable
@@ -21,13 +20,13 @@
     control-color="blue"
     :navigation="postsMap.size < 5"
     padding
-    arrows
+    :arrows="postsMap.size > 1"
     infinite
-    class="bg-white text-black shadow-up-6"
+    class="bg-white text-black shadow-up-6 full-height"
     @before-transition="messageChanged"
   >
     <q-carousel-slide
-      v-for="post in postsMap.values()"
+      v-for="post of postsMap.values()"
       :key="post.id"
       :name="post.id"
       class="fds-card-grid">
@@ -59,22 +58,19 @@
 </template>
 <script setup="setup" lang="ts">
 import {
-  defineOptions,
   computed,
-  ref,
   watch,
+  ref,
+  onMounted,
 } from 'vue';
 
-import { RateablePost, Rating, ReadablePost } from '@/core/API';
-
-defineOptions({
-  inheritAttrs: false,
-});
+import { RateablePost, Rating } from '@/core/API';
 
 /* eslint-disable no-spaced-func, func-call-spacing */
 const props = defineProps<{
-  posts: Array<ReadablePost>,
+  posts: Array<RateablePost>,
   exitFunction?: () => void,
+  emitChangeOnMounted?: boolean,
 }>();
 /* eslint-enable no-spaced-func, func-call-spacing */
 
@@ -82,34 +78,33 @@ const postsMap = computed(() => {
   const map = new Map<number, RateablePost>();
 
   for (const msg of props.posts) {
-    map.set(
-      msg.id,
-      new RateablePost(
-        msg.id,
-        msg.content,
-        msg.likes,
-        msg.dislikes,
-        msg.rated,
-        msg.location,
-      ),
-    );
+    map.set(msg.id, msg);
   }
 
   return map;
 });
 
-const slide = ref(postsMap.value.keys().next()?.value);
+const getFirstSlide = () => postsMap.value.keys().next()?.value;
 
-watch(() => props.posts, (v) => {
-  slide.value = v[0]?.id;
-});
-
+const slide = ref<string | number>(getFirstSlide());
 const emit = defineEmits(['messageChanged']);
 
 const messageChanged = (newMsgId: string | number, oldMsgId: string | number) => {
   const map = postsMap.value;
   emit('messageChanged', map.get(Number(newMsgId)), map.get(Number((oldMsgId))));
 };
+
+watch(postsMap, () => {
+  slide.value = postsMap.value.has(Number(slide.value))
+    ? slide.value
+    : getFirstSlide();
+});
+
+onMounted(() => {
+  if (props.emitChangeOnMounted) {
+    messageChanged(slide.value, slide.value);
+  }
+});
 </script>
 
 <style>
