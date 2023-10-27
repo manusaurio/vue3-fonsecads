@@ -8,7 +8,7 @@
                   />
 
   <MessagesLayers :pixelLocation="pixelLocation"
-                  @cluster-clicked="$router.push({ name: 'detail-view' })"
+                  @cluster-clicked="changeToDetailView"
                   />
   <!-- push to the detail route up there  -->
 </template>
@@ -26,6 +26,7 @@ import type {
   Map as OLMap,
   View,
 } from 'ol';
+import { useRouter } from 'vue-router';
 import type RenderEvent from 'ol/render/Event';
 import type { Layer } from 'ol/layer';
 import type { ObjectEvent } from 'ol/Object';
@@ -35,7 +36,7 @@ import type { GeolocationError } from 'ol/Geolocation';
 import store from '@/store';
 import type { FloorMeta } from '@/MapMeta';
 import MessagesLayers from '@/components/MessagesLayers.vue';
-import GeolocationWrapper from '@/components/GeolocationWrapper.vue';
+import { RateablePost } from '@/core/API';
 import postRenderCircle from '../postRenderCircle';
 import { useUpdateRouteWithCoords } from './updateCoords';
 import { useSetCoordsOnActivated } from './setCoordsOnActivated';
@@ -49,8 +50,8 @@ const projection = store.mapMeta.getVueOlProjection();
 const trackingOptions = { enableHighAccuracy: true };
 const shownGeoLocErrors = ref<Set<number>>(new Set());
 const emit = defineEmits(['floorChangeRequest']);
-
 const pixelLocation = ref();
+const router = useRouter();
 
 const geoLocError = (error: GeolocationError) => {
   let title: string;
@@ -145,6 +146,15 @@ let renderCircle: (e: RenderEvent) => void;
 
 useUpdateRouteWithCoords(viewRef, () => (currentLayer?.value as FloorMeta).level);
 useSetCoordsOnActivated(viewRef, (n: number) => { emit('floorChangeRequest', n); });
+
+const changeToDetailView = (posts: Array<RateablePost>) => {
+  const ids = posts.map((p) => p.id).join('.');
+
+  router.push({
+    name: 'detail-view',
+    query: { ids },
+  });
+};
 
 onBeforeMount(() => state.reset());
 
