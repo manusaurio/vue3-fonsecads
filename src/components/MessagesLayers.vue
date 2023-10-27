@@ -89,10 +89,12 @@ const getPixelsPositionFromPost = (() => {
 })();
 
 watch(
-  [store.messages, () => props.pixelLocation],
+  [store.messages, () => props.pixelLocation, currentLayer],
   () => {
     const fMsgs = farawayMessages.value;
     const nMsgs = nearbyMessages.value;
+    fMsgs.clear();
+    nMsgs.clear();
 
     if (!props.pixelLocation) return;
     for (const message of store.messages) {
