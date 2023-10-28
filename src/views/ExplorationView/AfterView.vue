@@ -56,6 +56,7 @@ const emit = defineEmits(['floorChangeRequest']);
 // eslint-disable-next-line arrow-body-style
 const canPost = computed(() => {
   return state.geolocation.on
+        && state.geolocation.working
         && store.mapMeta.getLastPoint()
         && !state.outOfBounds;
 });

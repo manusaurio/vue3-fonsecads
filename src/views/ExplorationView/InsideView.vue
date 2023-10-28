@@ -10,7 +10,6 @@
   <MessagesLayers :pixelLocation="pixelLocation"
                   @cluster-clicked="changeToDetailView"
                   />
-  <!-- push to the detail route up there  -->
 </template>
 
 <script setup="setup" lang="ts">
@@ -19,7 +18,6 @@ import {
   inject,
   Ref,
   onMounted,
-  onBeforeMount,
   onUnmounted,
 } from 'vue';
 import type {
@@ -52,7 +50,7 @@ const projection = store.mapMeta.getVueOlProjection();
 const trackingOptions = { enableHighAccuracy: true };
 const shownGeoLocErrors = ref<Set<number>>(new Set());
 const emit = defineEmits(['floorChangeRequest']);
-const pixelLocation = ref();
+const pixelLocation = ref(store.mapMeta.getLastPointInPixels());
 const router = useRouter();
 
 const geoLocError = (error: GeolocationError) => {
@@ -158,8 +156,6 @@ const changeToDetailView = (posts: Array<RateablePost>) => {
   });
 };
 
-onBeforeMount(() => state.reset());
-
 onMounted(() => {
   const map = mapRef?.value.map;
   const view = viewRef?.value;
@@ -190,5 +186,6 @@ onMounted(() => {
 onUnmounted(() => {
   const imageLayer = imageLayerRef?.value?.imageLayer;
   imageLayer?.un('postrender', renderCircle);
+  state.reset();
 });
 </script>

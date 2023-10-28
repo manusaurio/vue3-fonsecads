@@ -61,7 +61,7 @@ import { dist } from '@/math-utils';
 import store from '@/store';
 
 const props = defineProps<{
-  pixelLocation: [number, number],
+  pixelLocation: [number, number] | undefined,
 }>();
 
 const emit = defineEmits(['clusterClicked']);
@@ -108,6 +108,7 @@ watch(
   },
   {
     deep: true,
+    immediate: true,
   },
 );
 
