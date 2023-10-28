@@ -177,7 +177,7 @@ const router = useRouter();
 
 const submit = () => {
   router.push({
-    name: 'locate',
+    name: 'locate-view',
     query: { msg: message.value.toBigInt().toString(16) },
   });
 };
