@@ -27,11 +27,13 @@ import type {
   View,
 } from 'ol';
 import { useRouter } from 'vue-router';
+import { LoadingBar } from 'quasar';
 import type RenderEvent from 'ol/render/Event';
 import type { Layer } from 'ol/layer';
 import type { ObjectEvent } from 'ol/Object';
 import { easeOut } from 'ol/easing';
 import type { GeolocationError } from 'ol/Geolocation';
+import type { ImageStatic } from 'ol/source';
 
 import store from '@/store';
 import type { FloorMeta } from '@/MapMeta';
@@ -162,6 +164,16 @@ onMounted(() => {
   const map = mapRef?.value.map;
   const view = viewRef?.value;
   const imageLayer = imageLayerRef?.value?.imageLayer;
+
+  // XXX: It could probably be set up from the map core component, given the proper props
+  //  (see ol/source/ImageStatic events)
+  const imageSrc = (imageLayer?.getSource() as ImageStatic)?.getUrl();
+  if (imageSrc) {
+    LoadingBar.start();
+    const image = new Image();
+    image.onload = () => LoadingBar.stop();
+    image.src = imageSrc;
+  }
 
   renderCircle = postRenderCircle(
     map as OLMap,
