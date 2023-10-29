@@ -14,27 +14,44 @@ const routes: Array<RouteRecordRaw> = [
     redirect: { name: 'map' },
   },
   {
-    path: '/map/:coord?',
+    path: '/map',
     name: 'map',
-    component: () => import('../views/MapView.vue'),
-  },
-  {
-    path: '/view',
-    name: 'message-list',
-    component: () => import('../views/MessageList.vue'),
-  },
-  {
-    path: '/compose/locate',
-    name: 'locate',
-    component: () => import('../views/PlacementView.vue'),
-    beforeEnter: (to) => {
-      try {
-        BigInt(`0x${to.query.msg}`);
-        return true;
-      } catch (e) {
-        return { name: 'map' };
-      }
-    },
+    redirect: { name: 'exploration-view' },
+    component: () => import('../components/MapCore.vue'),
+    children: [
+      {
+        path: 'e/:coord?',
+        name: 'exploration-view',
+        components: {
+          'inside-map': () => import('../views/ExplorationView/InsideView.vue'),
+          'after-map': () => import('../views/ExplorationView/AfterView.vue'),
+        },
+      },
+      {
+        path: 'detail',
+        name: 'detail-view',
+        components: {
+          'inside-map': () => import('../views/PostDetailView/InsideView.vue'),
+          'after-map': () => import('../views/PostDetailView/AfterView.vue'),
+        },
+      },
+      {
+        path: 'locate',
+        name: 'locate-view',
+        components: {
+          'inside-map': () => import('../views/PlacementView/InsideView.vue'),
+          'after-map': () => import('../views/PlacementView/AfterView.vue'),
+        },
+        beforeEnter: (to) => {
+          try {
+            BigInt(`0x${to.query.msg}`);
+            return true;
+          } catch (e) {
+            return { name: 'map' };
+          }
+        },
+      },
+    ],
   },
   {
     path: '/compose',
@@ -75,5 +92,3 @@ router.beforeResolve(
 );
 
 export default router;
-
-//
