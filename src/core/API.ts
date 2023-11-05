@@ -10,20 +10,23 @@ export enum Rating {
 export interface SpatialPoint {
   lat: number,
   long: number,
-  floor: number,
+  floor?: number,
 }
 
 export interface Post<T> {
   id: number,
-  content: T,
-  likes: number,
-  dislikes: number,
-  rated: Rating,
   location: SpatialPoint,
+  content?: T,
+  likes?: number,
+  dislikes?: number,
+  rated?: Rating,
+  creationTime?: number,
+  bySelf?: boolean,
 }
 
 export interface PostResponse extends Post<number> {
   content: number,
+  creationTime: number,
 }
 
 export interface ReadablePost extends Post<Message> {
@@ -35,6 +38,7 @@ export class RateablePost implements ReadablePost {
   likes: number;
   dislikes: number;
   rated: Rating;
+  readonly location: { lat: number, long: number, floor: number };
 
   constructor(
     readonly id: number,
@@ -42,14 +46,20 @@ export class RateablePost implements ReadablePost {
     likes: number,
     dislikes: number,
     rated: Rating,
-    readonly location: SpatialPoint,
+    location: SpatialPoint,
+    readonly creationTime: number,
   ) {
     this.id = id;
     this.content = content;
     this.likes = likes;
     this.dislikes = dislikes;
     this.rated = rated;
-    this.location = { ...location };
+    this.location = {
+      lat: location.lat,
+      long: location.long,
+      floor: location.floor ?? 0,
+    };
+    this.creationTime = creationTime;
   }
 
   rate(newRating: Rating.LIKE | Rating.DISLIKE): void {
@@ -71,3 +81,16 @@ export class RateablePost implements ReadablePost {
     this.rated = newRating;
   }
 }
+
+// eslint-disable-next-line arrow-body-style
+const responseToRateable = (pr: PostResponse): RateablePost => {
+  return new RateablePost(
+    pr.id,
+    Message.fromString(`${pr.content}`),
+    pr.likes ?? 0,
+    pr.dislikes ?? 0,
+    pr.rated ?? Rating.UNSET,
+    pr.location,
+    pr.creationTime,
+  );
+};
