@@ -62,12 +62,12 @@ export class RateablePost implements ReadablePost {
     this.creationTime = creationTime;
   }
 
-  rate(newRating: Rating.LIKE | Rating.DISLIKE): void {
+  rateLocally(newRating: Rating.LIKE | Rating.DISLIKE): Rating {
     if (this.rated === newRating) {
       this.rated = Rating.UNSET;
       if (newRating === Rating.LIKE) this.likes--; else this.dislikes--;
 
-      return;
+      return this.rated;
     }
 
     if (newRating === Rating.LIKE) {
@@ -79,6 +79,7 @@ export class RateablePost implements ReadablePost {
     }
 
     this.rated = newRating;
+    return this.rated;
   }
 }
 
