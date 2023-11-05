@@ -37,7 +37,7 @@
       <div class="row justify-center">
         <div>
           <q-btn flat round color="primary"
-                 @click="() => post.rate(Rating.LIKE)"
+                 @click="() => rate(post, Rating.LIKE)"
                  :icon="post.rated === Rating.LIKE ? 'thumb_up' : 'o_thumb_up'" />
           <span>
             {{ post.likes }}
@@ -45,7 +45,7 @@
         </div>
         <div>
           <q-btn flat round color="primary"
-                 @click="() => post.rate(Rating.DISLIKE)"
+                 @click="() => rate(post, Rating.DISLIKE)"
                  :icon="post.rated === Rating.DISLIKE ? 'thumb_down' : 'o_thumb_down'" />
           <span>
             {{ post.dislikes }}
@@ -56,6 +56,7 @@
   </q-carousel>
 </div>
 </template>
+
 <script setup="setup" lang="ts">
 import {
   computed,
@@ -64,7 +65,7 @@ import {
   onMounted,
 } from 'vue';
 
-import { RateablePost, Rating } from '@/core/API';
+import { RateablePost, Rating, remote } from '@/core/API';
 
 /* eslint-disable no-spaced-func, func-call-spacing */
 const props = defineProps<{
@@ -92,6 +93,11 @@ const emit = defineEmits(['messageChanged']);
 const messageChanged = (newMsgId: string | number, oldMsgId: string | number) => {
   const map = postsMap.value;
   emit('messageChanged', map.get(Number(newMsgId)), map.get(Number((oldMsgId))));
+};
+
+const rate = (post: RateablePost, chosenRating: Rating.LIKE | Rating.DISLIKE) => {
+  const newRating = post.rateLocally(chosenRating);
+  remote.setRating(post.id, newRating);
 };
 
 watch(postsMap, () => {

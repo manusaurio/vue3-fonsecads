@@ -33,7 +33,7 @@ import type {
 } from 'ol';
 
 import type { FloorMeta } from '@/MapMeta';
-import { RateablePost, Rating } from '@/core/API';
+import { RateablePost, remote } from '@/core/API';
 import { Message } from '@/core/Message';
 import store from '@/store';
 import postRenderCircle from '../postRenderCircle';
@@ -60,31 +60,19 @@ let renderCircle: (e: RenderEvent) => void;
 const submit = () => {
   if (!state.chosenCoordinates || msg === undefined) return;
 
-  const id = store.messages.reduce((prev, curr) => prev.id > curr.id ? prev : curr).id + 1;
   const [x, y] = state.chosenCoordinates;
   const [lat, long] = store.mapMeta.pixelsToDegrees(x, y);
 
-  store.messages.push(
-    new RateablePost(
-      id,
-      msg,
-      0,
-      0,
-      Rating.UNSET,
-      {
-        lat,
-        long,
-        floor: currentLayer.value.level,
-      },
-    ),
-  );
-
-  router.push({
-    name: 'map',
-    params: {
-      coord: `${lat},${long},4,${currentLayer.value.level}`,
+  remote.postMessage(
+    {
+      lat,
+      long,
+      floor: currentLayer.value.level,
     },
-  });
+    msg,
+  ).then((p: RateablePost) => store.posts.set(p.id, p))
+    .then(() => console.log(store.posts))
+    .finally(() => router.push({ name: 'map' }));
 };
 
 // XXX: This does not prevent the component from being mounted/unmounted

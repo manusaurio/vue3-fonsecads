@@ -5,7 +5,7 @@
                  :posts="posts"
                  :exit-function="() => router.push({ name: 'map' })"
                  emit-change-on-mounted
-                 style="height: 300px"
+                 style="height: 50%; max-height: 300px"
                  @messageChanged="messageChanged"
     />
 </template>
@@ -50,7 +50,7 @@ const withinRange = (post: RateablePost) => {
 };
 
 onMounted(() => {
-  const database = store.messages;
+  const database = store.posts;
   const idsParam = route.query.ids;
   const ids: Array<number> | undefined = typeof idsParam === 'string'
     && idsParam?.split('.')
@@ -60,7 +60,8 @@ onMounted(() => {
     || undefined;
 
   if (ids !== undefined && ids.length > 0) {
-    posts.value = ids.map((id) => database[id]).filter((p) => p !== undefined && withinRange(p));
+    posts.value = ids.map((id) => database.get(id))
+      .filter((p) => p !== undefined && withinRange(p));
   }
 
   if (posts.value.length === 0) router.push({ name: 'map' });

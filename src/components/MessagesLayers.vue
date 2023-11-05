@@ -89,7 +89,7 @@ const getPixelsPositionFromPost = (() => {
 })();
 
 watch(
-  [store.messages, () => props.pixelLocation, currentLayer],
+  [store.posts, () => props.pixelLocation, currentLayer],
   () => {
     const fMsgs = farawayMessages.value;
     const nMsgs = nearbyMessages.value;
@@ -97,12 +97,12 @@ watch(
     nMsgs.clear();
 
     if (!props.pixelLocation) return;
-    for (const message of store.messages) {
-      if (message.location.floor === currentLayer?.value.level) {
-        const msgPos = getPixelsPositionFromPost(message);
+    for (const post of store.posts.values()) {
+      if (post.location.floor === currentLayer?.value.level) {
+        const msgPos = getPixelsPositionFromPost(post);
 
-        if (dist(msgPos, props.pixelLocation) < store.getPostableRadius()) nMsgs.add(message);
-        else fMsgs.add(message);
+        if (dist(msgPos, props.pixelLocation) < store.getPostableRadius()) nMsgs.add(post);
+        else fMsgs.add(post);
       }
     }
   },

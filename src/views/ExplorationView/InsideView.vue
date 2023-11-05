@@ -38,6 +38,7 @@ import type { FloorMeta } from '@/MapMeta';
 import MessagesLayers from '@/components/MessagesLayers.vue';
 import { RateablePost } from '@/core/API';
 import postRenderCircle from '../postRenderCircle';
+import { useUpdateStoredPosts } from '../updateStoredPosts';
 import { useUpdateRouteWithCoords } from './updateCoords';
 import { useSetCoordsOnActivated } from './setCoordsOnActivated';
 import { state } from './common';
@@ -92,6 +93,8 @@ const geoLocError = (error: GeolocationError) => {
   shownGeoLocErrors.value.add(error.code);
 };
 
+const { updateLocalDatabase } = useUpdateStoredPosts();
+
 const geoLocChange = (event: ObjectEvent) => {
   state.geolocation.on = true;
   state.geolocation.working = true;
@@ -140,6 +143,7 @@ const geoLocChange = (event: ObjectEvent) => {
   });
 
   pixelLocation.value = store.mapMeta.getLastPointInPixels();
+  updateLocalDatabase();
 };
 
 let renderCircle: (e: RenderEvent) => void;
@@ -181,6 +185,7 @@ onMounted(() => {
   );
 
   imageLayer?.on('postrender', renderCircle);
+  updateLocalDatabase(); // not strictly required here, actually
 });
 
 onUnmounted(() => {
