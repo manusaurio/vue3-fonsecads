@@ -95,3 +95,100 @@ const responseToRateable = (pr: PostResponse): RateablePost => {
     pr.creationTime,
   );
 };
+
+const backendUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:8080' : 'https://susurr.ar/i';
+
+// TODO: Complete and refactor this disaster
+export const remote = {
+  async login(onSuccess?: () => void) {
+    fetch(
+      `${backendUrl}/login`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'X-Requested-With': 'fetch',
+        },
+      },
+    )
+      .then((r: Response) => {
+        if (r.status === 201) return r.json();
+        throw new Error(`Login response was not 201: ${r.status} ${r.statusText}`);
+      })
+      .then(onSuccess);
+  },
+  requestMessage(id: number) {
+    const req = fetch(
+      `${backendUrl}/messages?ids=${id}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'X-Requested-With': 'fetch',
+        },
+      },
+    );
+
+    const jsonPost = req.then((r: Response) => r.json());
+    jsonPost.then(responseToRateable);
+
+    return jsonPost;
+  },
+  requestMessages(location: SpatialPoint, since?: number, ids?: Array<number>) {
+    const queryParams = new URLSearchParams();
+    queryParams.set('location', `${location.long} ${location.lat} ${location.floor}`);
+    if (since !== undefined) queryParams.set('since', since.toString());
+    if (ids) queryParams.set('ids', ids.join('.'));
+
+    const req = fetch(
+      `${backendUrl}/messages?${queryParams}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'X-Requested-With': 'fetch',
+        },
+      },
+    );
+
+    return req.then((r: Response) => r.json())
+      .then((r: Array<PostResponse>) => r.map(responseToRateable));
+  },
+  setRating(id: number, rating: Rating) {
+    const req = fetch(
+      `${backendUrl}/messages/vote`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'X-Requested-With': 'fetch',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          id: id.toString(),
+          vote: rating.toString(),
+        }),
+      },
+    );
+    return req;
+  },
+  postMessage(location: SpatialPoint, content: Message) {
+    const req = fetch(
+      `${backendUrl}/messages`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'X-Requested-With': 'fetch',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          location: `${location.lat} ${location.long} ${location.floor}`,
+          content: content.toBigInt().toString(),
+        }).toString(),
+      },
+    );
+    return req.then((p: Response) => p.json())
+      .then(responseToRateable);
+  },
+};
