@@ -15,7 +15,7 @@ export function useUpdateStoredPosts() {
     //  at all if the last point isn't defined. The current version of the backend
     //  is quite lax as of now and requires a point to be provided,  but does not
     //  check where it's located
-    const point = store.mapMeta.getLastPoint() ?? { lat: 0, long: 0, floor: 0 };
+    const point = store.mapMeta.getLastPoint() ?? { lat: 0, long: 0, level: 0 };
 
     // TODO: prevent concurrent requests. A change in the backend might make this
     //  easier tho: we could keep concurrent requests but check the (now non-existant)

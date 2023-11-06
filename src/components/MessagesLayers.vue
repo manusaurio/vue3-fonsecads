@@ -98,7 +98,8 @@ watch(
 
     if (!props.pixelLocation) return;
     for (const post of store.posts.values()) {
-      if (post.location.floor === currentLayer?.value.level) {
+      // console.log(post.location.floor);
+      if (post.location.level === currentLayer?.value.level) {
         const msgPos = getPixelsPositionFromPost(post);
 
         if (dist(msgPos, props.pixelLocation) < store.getPostableRadius()) nMsgs.add(post);

@@ -67,7 +67,7 @@ const submit = () => {
     {
       lat,
       long,
-      floor: currentLayer.value.level,
+      level: currentLayer.value.level,
     },
     msg,
   ).then((p: RateablePost) => store.posts.set(p.id, p))

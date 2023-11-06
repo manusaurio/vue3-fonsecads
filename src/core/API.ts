@@ -10,7 +10,7 @@ export enum Rating {
 export interface SpatialPoint {
   lat: number,
   long: number,
-  floor?: number,
+  level: number,
 }
 
 export interface Post<T> {
@@ -38,7 +38,7 @@ export class RateablePost implements ReadablePost {
   likes: number;
   dislikes: number;
   rated: Rating;
-  readonly location: { lat: number, long: number, floor: number };
+  readonly location: { lat: number, long: number, level: number };
 
   constructor(
     readonly id: number,
@@ -57,7 +57,7 @@ export class RateablePost implements ReadablePost {
     this.location = {
       lat: location.lat,
       long: location.long,
-      floor: location.floor ?? 0,
+      level: location.level,
     };
     this.creationTime = creationTime;
   }
@@ -136,7 +136,7 @@ export const remote = {
   },
   requestMessages(location: SpatialPoint, since?: number, ids?: Array<number>) {
     const queryParams = new URLSearchParams();
-    queryParams.set('location', `${location.long} ${location.lat} ${location.floor}`);
+    queryParams.set('location', `${location.long} ${location.lat} ${location.level ?? 0}`);
     if (since !== undefined) queryParams.set('since', since.toString());
     if (ids) queryParams.set('ids', ids.join('.'));
 
@@ -183,7 +183,7 @@ export const remote = {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          location: `${location.lat} ${location.long} ${location.floor}`,
+          location: `${location.lat} ${location.long} ${location.level}`,
           content: content.toBigInt().toString(),
         }).toString(),
       },
