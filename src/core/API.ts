@@ -96,7 +96,7 @@ const responseToRateable = (pr: PostResponse): RateablePost => {
   );
 };
 
-const backendUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:8080' : 'https://susurr.ar/i';
+const backendUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:8080' : 'https://susurr.ar/api';
 
 // TODO: Complete and refactor this disaster
 export const remote = {
