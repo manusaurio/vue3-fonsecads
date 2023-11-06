@@ -45,7 +45,7 @@ const withinRange = (post: RateablePost) => {
 
   const { lat, long } = post.location;
   const postCoord = store.mapMeta.degreesToPixels(lat, long);
-  return post.location.floor === currentLayer?.value.level
+  return post.location.level === currentLayer?.value.level
         && dist(lastUserCoordPixels, postCoord) < radius;
 };
 
