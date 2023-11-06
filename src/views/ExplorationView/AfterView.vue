@@ -3,7 +3,7 @@
     <q-dialog v-model="showingInfo" :no-route-dismiss="true">
       <q-card>
         <q-card-section>
-          <div class="text-h6">FonsecaDS</div>
+          <div class="text-h6">Susurrar</div>
         </q-card-section>
         <q-card-section>
           Desde esta aplicación podés dejar mensajes anónimos en puntos geoespaciales.
